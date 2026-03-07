@@ -209,3 +209,47 @@
                 const result = JSON.parse(cleanJsonString);
                 
                 renderOutput(result);
+
+            } catch (error) {
+                console.error("Full Error Details:", error);
+                errorBox.innerText = error.message;
+                errorBox.classList.remove('hidden');
+            } finally {
+                document.getElementById('btn-text').innerText = "Generate Notes (Free Gemini)";
+                document.getElementById('btn-spinner').classList.add('hidden');
+                document.getElementById('gen-btn').disabled = false;
+            }
+        }
+
+        // --- 3. RENDER OUTPUT ---
+        function renderOutput(data) {
+            document.getElementById('status-msg').classList.add('hidden');
+            document.getElementById('output-area').classList.remove('hidden');
+
+            // Populate SOAP Note, with fallbacks in case AI misses a field
+            document.getElementById('soap-s').innerText = data.soap?.subjective || "N/A";
+            document.getElementById('soap-o').innerText = data.soap?.objective || "N/A";
+            document.getElementById('soap-a').innerText = data.soap?.assessment || "N/A";
+            document.getElementById('soap-p').innerText = data.soap?.plan || "N/A";
+
+            // Populate Prescription
+            const rxList = document.getElementById('rx-list');
+            rxList.innerHTML = ""; 
+            
+            if(data.prescription && Array.isArray(data.prescription) && data.prescription.length > 0) {
+                data.prescription.forEach((med, index) => {
+                    rxList.innerHTML += `
+                        <div class="mb-3">
+                            <p class="font-medium text-slate-800">${index + 1}. ${med.medicine || "Unknown Medicine"}</p>
+                            <p class="text-sm text-slate-600 ml-4">Sig: ${med.dosage || "-"} | ${med.duration || "-"}</p>
+                            <p class="text-xs text-slate-500 ml-4 italic">Note: ${med.instructions || "Use as directed"}</p>
+                        </div>
+                    `;
+                });
+            } else {
+                rxList.innerHTML = "<p class='text-sm text-slate-500'>No medications prescribed.</p>";
+            }
+        }
+    </script>
+</body>
+</html>
