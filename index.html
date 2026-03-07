@@ -3,74 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MedScribe | 100% Free Prototype v4</title>
+    <title>MedScribe | Premium AI Clinical Notes</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        primary: '#1e3a8a', // Deep Navy
+                        secondary: '#4f46e5', // Soft Indigo
+                        surface: '#ffffff',
+                        background: '#f8fafc',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Smooth fade-in animation for the output */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        textarea { resize: none; }
+    </style>
 </head>
-<body class="bg-slate-50 font-sans text-slate-900">
+<body class="bg-background font-sans text-slate-800 antialiased min-h-screen flex flex-col">
 
-    <nav class="bg-teal-700 text-white p-4 shadow-lg flex justify-between items-center">
-        <h1 class="text-xl font-bold"><i class="fa-solid fa-leaf mr-2"></i>MedScribe <span class="text-teal-200 text-sm font-light">$0 COST PROTOTYPE</span></h1>
+    <nav class="bg-surface border-b border-slate-200 sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="bg-blue-50 p-2 rounded-lg text-secondary">
+                <i class="fa-solid fa-stethoscope text-xl"></i>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight text-slate-900">MedScribe <span class="text-xs font-medium bg-indigo-100 text-secondary px-2 py-0.5 rounded-full ml-2">PROTOTYPE</span></h1>
+        </div>
         
-        <div class="flex items-center gap-2">
-            <i class="fa-solid fa-key text-sm"></i>
-            <input type="password" id="api-key" placeholder="Paste Gemini Free API Key" class="text-black text-sm px-2 py-1 rounded outline-none w-64 border border-teal-500">
+        <div class="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-full px-4 py-1.5 focus-within:border-secondary focus-within:ring-2 focus-within:ring-indigo-100 transition-all shadow-inner">
+            <i class="fa-solid fa-key text-slate-400 text-sm"></i>
+            <input type="password" id="api-key" placeholder="Paste Gemini API Key" class="bg-transparent text-sm text-slate-700 outline-none w-56 placeholder-slate-400">
         </div>
     </nav>
 
-    <main class="container mx-auto p-4 max-w-5xl mt-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <main class="container mx-auto p-6 max-w-6xl flex-grow flex flex-col justify-center">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-semibold text-teal-800">1. Free Web Speech Dictation</h2>
-                    <select id="language-select" class="text-sm p-1 border rounded outline-teal-500">
-                        <option value="en-IN">English (India) / Hinglish</option>
+            <div class="flex flex-col gap-4">
+                <div class="flex justify-between items-end">
+                    <div>
+                        <h2 class="text-lg font-semibold text-slate-800">Clinical Dictation</h2>
+                        <p class="text-sm text-slate-500 mt-1">Speak naturally. The AI will structure your notes.</p>
+                    </div>
+                    <select id="language-select" class="text-sm bg-white border border-slate-200 text-slate-600 rounded-lg px-3 py-1.5 outline-none focus:border-secondary shadow-sm">
+                        <option value="en-IN">English / Hinglish</option>
                         <option value="hi-IN">Hindi</option>
                     </select>
                 </div>
                 
-                <button id="record-btn" class="w-full h-24 border-2 border-dashed border-teal-300 bg-teal-50 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-teal-100 transition-all">
-                    <i id="mic-icon" class="fa-solid fa-microphone text-3xl text-teal-600"></i>
-                    <p class="mt-2 text-sm text-teal-800 font-medium" id="mic-text">Click to Start Listening (Browser Native)</p>
-                </button>
-                
-                <h3 class="text-sm font-semibold mt-6 mb-2 text-slate-600">Live Transcript:</h3>
-                <textarea id="transcript-output" rows="5" class="w-full p-3 text-sm border rounded-lg bg-slate-50 focus:outline-teal-500" placeholder="Start speaking... text will appear here live."></textarea>
-                
-                <button onclick="generateWithGemini()" id="gen-btn" class="w-full mt-4 bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-lg shadow-md flex justify-center items-center transition-colors">
-                    <span id="btn-text">Generate Notes (Free Gemini)</span>
-                    <i id="btn-spinner" class="fa-solid fa-circle-notch fa-spin ml-2 hidden"></i>
-                </button>
-
-                <div id="error-box" class="hidden mt-4 p-3 bg-red-100 border border-red-400 text-red-700 text-sm rounded"></div>
-            </div>
-
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-lg font-semibold mb-4 text-teal-800">2. AI Output</h2>
-                
-                <div id="output-area" class="space-y-6 hidden">
-                    <div class="p-4 bg-teal-50 rounded-lg border border-teal-100">
-                        <h3 class="font-bold text-teal-800 border-b border-teal-200 pb-2 mb-2">SOAP Note</h3>
-                        <p class="text-sm mb-1"><strong>S:</strong> <span id="soap-s"></span></p>
-                        <p class="text-sm mb-1"><strong>O:</strong> <span id="soap-o"></span></p>
-                        <p class="text-sm mb-1"><strong>A:</strong> <span id="soap-a"></span></p>
-                        <p class="text-sm"><strong>P:</strong> <span id="soap-p"></span></p>
-                    </div>
-
-                    <div class="p-4 border rounded-lg border-slate-200">
-                        <h3 class="font-bold border-b pb-2 mb-3 text-slate-800">Rx - Prescription</h3>
-                        <div id="rx-list" class="space-y-3"></div>
+                <div class="relative bg-white border border-slate-200 rounded-2xl shadow-sm focus-within:border-secondary focus-within:ring-4 focus-within:ring-indigo-50 transition-all flex flex-col h-80">
+                    <textarea id="transcript-output" class="w-full flex-grow p-5 text-slate-700 bg-transparent outline-none rounded-t-2xl leading-relaxed" placeholder="Doctor, begin dictation here..."></textarea>
+                    
+                    <div class="bg-slate-50 border-t border-slate-100 p-3 rounded-b-2xl flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <button id="record-btn" class="w-12 h-12 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-secondary hover:border-secondary hover:shadow-md transition-all flex items-center justify-center group" title="Toggle Microphone">
+                                <i id="mic-icon" class="fa-solid fa-microphone text-lg group-hover:scale-110 transition-transform"></i>
+                            </button>
+                            <span id="mic-text" class="text-sm font-medium text-slate-500">Ready to record</span>
+                        </div>
+                        <button onclick="generateWithGemini()" id="gen-btn" class="bg-primary hover:bg-blue-900 text-white text-sm font-semibold px-6 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2">
+                            <span id="btn-text">Generate Notes</span>
+                            <i id="btn-spinner" class="fa-solid fa-circle-notch fa-spin hidden"></i>
+                            <i id="btn-icon" class="fa-solid fa-wand-magic-sparkles"></i>
+                        </button>
                     </div>
                 </div>
+
+                <div id="error-box" class="hidden p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded-r-lg shadow-sm"></div>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/40 flex flex-col overflow-hidden h-full min-h-[500px]">
+                <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex justify-between items-center">
+                    <h2 class="text-lg font-semibold text-slate-800">Structured Medical Record</h2>
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">AI Generated</span>
+                </div>
                 
-                <p id="status-msg" class="text-center text-slate-400 mt-10">Use Chrome browser for best results.</p>
+                <div class="p-6 flex-grow overflow-y-auto">
+                    <div id="status-msg" class="h-full flex flex-col items-center justify-center text-slate-400 space-y-4">
+                        <i class="fa-solid fa-file-medical text-4xl text-slate-200"></i>
+                        <p class="text-sm">Your structured SOAP note and prescription will appear here.</p>
+                    </div>
+
+                    <div id="output-area" class="space-y-8 hidden animate-fade-in">
+                        
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2"><i class="fa-solid fa-clipboard-user text-secondary"></i> Clinical Assessment (SOAP)</h3>
+                            <div class="bg-slate-50 rounded-xl border border-slate-100 p-5 space-y-4">
+                                <div><span class="font-bold text-slate-800 w-6 inline-block">S:</span> <span class="text-slate-600 text-sm" id="soap-s"></span></div>
+                                <div class="w-full h-px bg-slate-200"></div>
+                                <div><span class="font-bold text-slate-800 w-6 inline-block">O:</span> <span class="text-slate-600 text-sm" id="soap-o"></span></div>
+                                <div class="w-full h-px bg-slate-200"></div>
+                                <div><span class="font-bold text-slate-800 w-6 inline-block">A:</span> <span class="text-slate-600 text-sm" id="soap-a"></span></div>
+                                <div class="w-full h-px bg-slate-200"></div>
+                                <div><span class="font-bold text-slate-800 w-6 inline-block">P:</span> <span class="text-slate-600 text-sm" id="soap-p"></span></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2"><i class="fa-solid fa-pills text-secondary"></i> Prescription (Rx)</h3>
+                            <div id="rx-list" class="space-y-3">
+                                </div>
+                        </div>
+
+                    </div>
+                </div>
             </div>
         </div>
     </main>
 
     <script>
-        // --- 1. FREE BROWSER SPEECH TO TEXT ---
+        // --- 1. BROWSER SPEECH TO TEXT ---
         let recognition;
         let isRecording = false;
         let finalTranscript = '';
@@ -88,9 +139,10 @@
 
             recognition.onstart = function() {
                 isRecording = true;
-                micIcon.classList.add('animate-pulse', 'text-red-500');
-                micIcon.classList.remove('text-teal-600');
-                micText.innerText = "Listening live... Click to Stop";
+                recordBtn.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
+                recordBtn.classList.add('bg-red-50', 'text-red-500', 'border-red-200', 'animate-pulse');
+                micText.innerText = "Listening...";
+                micText.classList.add('text-red-500');
             };
 
             recognition.onresult = function(event) {
@@ -107,18 +159,20 @@
 
             recognition.onerror = function(event) {
                 console.error("Speech recognition error", event.error);
-                if(event.error === 'not-allowed') alert("Please allow microphone permissions in your browser.");
+                if(event.error === 'not-allowed') alert("Please allow microphone permissions in the browser URL bar.");
             };
 
             recognition.onend = function() {
                 isRecording = false;
-                micIcon.classList.remove('animate-pulse', 'text-red-500');
-                micIcon.classList.add('text-teal-600');
-                micText.innerText = "Click to Start Listening (Browser Native)";
+                recordBtn.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
+                recordBtn.classList.remove('bg-red-50', 'text-red-500', 'border-red-200', 'animate-pulse');
+                micText.innerText = "Ready to record";
+                micText.classList.remove('text-red-500');
             };
         } else {
-            alert("Speech Recognition API not supported in this browser. Please use Google Chrome.");
+            micText.innerText = "Mic not supported on this browser";
             recordBtn.disabled = true;
+            recordBtn.classList.add('opacity-50', 'cursor-not-allowed');
         }
 
         recordBtn.onclick = () => {
@@ -130,27 +184,31 @@
             }
         };
 
-        // --- 2. FREE GEMINI AI GENERATION ---
+        // --- 2. GEMINI AI GENERATION ---
         async function generateWithGemini() {
             const errorBox = document.getElementById('error-box');
-            errorBox.classList.add('hidden'); // Hide previous errors
+            errorBox.classList.add('hidden');
             
-            // Trim whitespace/hidden characters from API key
             const apiKey = document.getElementById('api-key').value.trim(); 
             const transcript = transcriptOutput.value.trim();
             
             if(!apiKey) {
-                alert("Please paste your Google Gemini API Key at the top!");
+                errorBox.innerText = "Authentication required: Please paste your Gemini API Key in the top right.";
+                errorBox.classList.remove('hidden');
                 return;
             }
             if(!transcript) {
-                alert("Please record some audio or type a transcript first.");
+                errorBox.innerText = "Empty input: Please record or type a clinical dictation first.";
+                errorBox.classList.remove('hidden');
                 return;
             }
 
-            document.getElementById('btn-text').innerText = "Analyzing Clinically...";
+            // Update UI to Loading State
+            document.getElementById('btn-text').innerText = "Analyzing...";
             document.getElementById('btn-spinner').classList.remove('hidden');
+            document.getElementById('btn-icon').classList.add('hidden');
             document.getElementById('gen-btn').disabled = true;
+            document.getElementById('gen-btn').classList.add('opacity-80', 'cursor-not-allowed');
             
             const systemPrompt = `You are an expert Indian Clinical Scribe. Read the transcript (which may be in English, Hindi, or Hinglish). 
             Extract the medical data and return ONLY RAW JSON.
@@ -159,7 +217,7 @@
             2. Use standard Indian dosing formats (e.g., 1-0-1, SOS).
             3. Infer durations (e.g., 3 days) if implied.
             
-            DO NOT output any markdown (no \`\`\`json). DO NOT output conversational text. Output ONLY this exact JSON structure:
+            DO NOT output any markdown. DO NOT output conversational text. Output ONLY this exact JSON structure:
             {
                 "soap": {
                     "subjective": "...",
@@ -173,36 +231,31 @@
             }`;
 
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                // Notice the fixed model name here: gemini-1.5-flash-latest
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         contents: [{
                             parts: [{ text: systemPrompt + "\n\nTranscript:\n" + transcript }]
                         }],
-                        generationConfig: {
-                            temperature: 0.1 // Keeps the AI strict and focused
-                        }
+                        generationConfig: { temperature: 0.1 }
                     })
                 });
 
                 const data = await response.json();
                 
-                // Check if Google's API returned an authentication/quota error
                 if(data.error) {
-                    throw new Error(`API Error: ${data.error.message}`);
+                    throw new Error(`Google API Error: ${data.error.message}`);
                 }
 
-                // Get the text from Gemini
                 let rawText = data.candidates[0].content.parts[0].text;
                 
-                // BULLETPROOF JSON EXTRACTOR
-                // This finds the first { and the last } and ignores everything else.
                 const startIndex = rawText.indexOf('{');
                 const endIndex = rawText.lastIndexOf('}');
                 
                 if (startIndex === -1 || endIndex === -1) {
-                    throw new Error("AI did not return a valid JSON structure. Please try again.");
+                    throw new Error("Data parsing failed. AI did not return a valid structure.");
                 }
                 
                 let cleanJsonString = rawText.substring(startIndex, endIndex + 1);
@@ -215,22 +268,31 @@
                 errorBox.innerText = error.message;
                 errorBox.classList.remove('hidden');
             } finally {
-                document.getElementById('btn-text').innerText = "Generate Notes (Free Gemini)";
+                // Restore UI State
+                document.getElementById('btn-text').innerText = "Generate Notes";
                 document.getElementById('btn-spinner').classList.add('hidden');
+                document.getElementById('btn-icon').classList.remove('hidden');
                 document.getElementById('gen-btn').disabled = false;
+                document.getElementById('gen-btn').classList.remove('opacity-80', 'cursor-not-allowed');
             }
         }
 
         // --- 3. RENDER OUTPUT ---
         function renderOutput(data) {
             document.getElementById('status-msg').classList.add('hidden');
-            document.getElementById('output-area').classList.remove('hidden');
+            const outputArea = document.getElementById('output-area');
+            
+            // Reset animation
+            outputArea.classList.remove('animate-fade-in');
+            void outputArea.offsetWidth; // trigger reflow
+            outputArea.classList.add('animate-fade-in');
+            outputArea.classList.remove('hidden');
 
-            // Populate SOAP Note, with fallbacks in case AI misses a field
-            document.getElementById('soap-s').innerText = data.soap?.subjective || "N/A";
-            document.getElementById('soap-o').innerText = data.soap?.objective || "N/A";
-            document.getElementById('soap-a').innerText = data.soap?.assessment || "N/A";
-            document.getElementById('soap-p').innerText = data.soap?.plan || "N/A";
+            // Populate SOAP Note
+            document.getElementById('soap-s').innerText = data.soap?.subjective || "Not specified";
+            document.getElementById('soap-o').innerText = data.soap?.objective || "Not specified";
+            document.getElementById('soap-a').innerText = data.soap?.assessment || "Not specified";
+            document.getElementById('soap-p').innerText = data.soap?.plan || "Not specified";
 
             // Populate Prescription
             const rxList = document.getElementById('rx-list');
@@ -239,15 +301,25 @@
             if(data.prescription && Array.isArray(data.prescription) && data.prescription.length > 0) {
                 data.prescription.forEach((med, index) => {
                     rxList.innerHTML += `
-                        <div class="mb-3">
-                            <p class="font-medium text-slate-800">${index + 1}. ${med.medicine || "Unknown Medicine"}</p>
-                            <p class="text-sm text-slate-600 ml-4">Sig: ${med.dosage || "-"} | ${med.duration || "-"}</p>
-                            <p class="text-xs text-slate-500 ml-4 italic">Note: ${med.instructions || "Use as directed"}</p>
+                        <div class="bg-white border border-slate-200 p-4 rounded-xl flex justify-between items-center shadow-sm hover:shadow-md transition-shadow">
+                            <div class="flex items-start gap-4">
+                                <div class="bg-indigo-50 text-secondary font-bold w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0">
+                                    ${index + 1}
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-base">${med.medicine || "Unknown"}</h4>
+                                    <p class="text-sm text-slate-500 mt-0.5"><i class="fa-regular fa-clock mr-1 text-slate-400"></i> ${med.dosage || "-"} &nbsp;&bull;&nbsp; ${med.duration || "-"}</p>
+                                    <p class="text-xs text-slate-400 mt-1 italic">${med.instructions || "Use as directed"}</p>
+                                </div>
+                            </div>
                         </div>
                     `;
                 });
             } else {
-                rxList.innerHTML = "<p class='text-sm text-slate-500'>No medications prescribed.</p>";
+                rxList.innerHTML = `
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-100 text-center text-slate-500 text-sm">
+                        No medications prescribed in this session.
+                    </div>`;
             }
         }
     </script>
