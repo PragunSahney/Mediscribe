@@ -14,9 +14,7 @@
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
                         brand: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 900: '#312e81' },
-                        surface: '#ffffff',
-                        background: '#f8fafc',
-                        dark: '#0f172a'
+                        surface: '#ffffff', background: '#f8fafc', dark: '#0f172a'
                     },
                     boxShadow: { 'premium': '0 10px 40px -10px rgba(0,0,0,0.08)' }
                 }
@@ -31,18 +29,14 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        /* Upgraded Editable field styling to make it obvious to doctors */
         [contenteditable="true"] {
-            transition: all 0.2s; border-radius: 4px; padding: 2px 6px; margin: -2px -6px; outline: none; 
-            border-bottom: 1px dashed #cbd5e1; /* Visual cue for editing */
+            transition: all 0.2s; border-radius: 4px; padding: 2px 6px; margin: -2px -6px; outline: none; border-bottom: 1px dashed #cbd5e1;
         }
         [contenteditable="true"]:hover { background-color: #f8fafc; cursor: text; border-bottom: 1px dashed #6366f1; }
         [contenteditable="true"]:focus { background-color: #ffffff; box-shadow: 0 0 0 2px #e0e7ff; border-bottom: 1px solid #6366f1; }
         [contenteditable="true"]:empty:before { content: attr(data-placeholder); color: #94a3b8; font-style: italic; }
         
-        @media print {
-            [contenteditable="true"] { border: none !important; padding: 0 !important; margin: 0 !important; box-shadow: none !important; }
-        }
+        @media print { [contenteditable="true"] { border: none !important; padding: 0 !important; margin: 0 !important; box-shadow: none !important; } }
         textarea { resize: none; }
     </style>
 </head>
@@ -112,15 +106,18 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="relative flex flex-col h-56 border border-slate-200 rounded-xl overflow-hidden focus-within:border-brand-500 transition-colors bg-slate-50 focus-within:bg-white shadow-inner">
-                            <textarea id="transcript-output" onblur="autoSaveContext()" class="w-full flex-grow p-4 text-slate-700 bg-transparent outline-none text-sm leading-relaxed" placeholder="Doctor, begin dictation here..."></textarea>
-                            <div class="bg-white border-t border-slate-100 p-3 flex justify-between items-center">
-                                <button id="record-btn" class="w-10 h-10 rounded-full bg-slate-100 text-slate-600 hover:text-red-500 hover:bg-red-50 transition-all flex items-center justify-center group relative">
-                                    <i id="mic-icon" class="fa-solid fa-microphone group-hover:scale-110 transition-transform z-10"></i>
-                                    <div id="mic-pulse" class="absolute inset-0 rounded-full bg-red-400 opacity-0 hidden"></div>
-                                </button>
-                                <button onclick="generateWithGemini()" id="gen-btn" class="bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium px-4 py-2 rounded-lg shadow-md transition-all flex items-center gap-2">
-                                    <span id="btn-text">Generate Note</span>
+
+                        <button id="record-btn" class="w-full bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 font-semibold py-3 rounded-xl mb-3 transition-all flex items-center justify-center gap-2 relative overflow-hidden shadow-sm">
+                            <i id="mic-icon" class="fa-solid fa-microphone z-10"></i> 
+                            <span id="record-text" class="z-10">Start Dictation</span>
+                            <div id="mic-pulse" class="absolute inset-0 bg-red-100 opacity-0 hidden"></div>
+                        </button>
+
+                        <div class="relative flex flex-col h-48 border border-slate-200 rounded-xl overflow-hidden focus-within:border-brand-500 transition-colors bg-slate-50 focus-within:bg-white shadow-inner">
+                            <textarea id="transcript-output" onblur="autoSaveContext()" class="w-full flex-grow p-4 text-slate-700 bg-transparent outline-none text-sm leading-relaxed" placeholder="Transcript will appear here..."></textarea>
+                            <div class="bg-white border-t border-slate-100 p-3 flex justify-end items-center">
+                                <button onclick="generateWithGemini()" id="gen-btn" class="bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium px-6 py-2 rounded-lg shadow-md transition-all flex items-center gap-2">
+                                    <span id="btn-text">Generate AI Note</span>
                                     <i id="btn-spinner" class="fa-solid fa-circle-notch fa-spin hidden"></i>
                                 </button>
                             </div>
@@ -149,14 +146,18 @@
                             <div id="status-msg" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 print:hidden">
                                 <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-4 border border-slate-100 shadow-sm"><i class="fa-regular fa-file-lines text-3xl text-slate-300"></i></div>
                                 <p class="text-sm font-medium text-slate-500">Structured data will appear here.</p>
-                                <p class="text-xs text-slate-400 mt-2">Click any text to edit • Add custom medicines</p>
                             </div>
 
                             <div id="output-area" class="space-y-8 hidden print:block bg-white p-6 rounded-xl border border-slate-100 shadow-sm print:border-none print:shadow-none print:p-0">
                                 
                                 <div id="differential-section" class="bg-slate-50 p-5 rounded-xl border border-slate-200 print:hidden">
                                     <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2 border-b border-slate-200 pb-2"><i class="fa-solid fa-microscope text-indigo-500"></i> Differential Diagnosis AI</h3>
-                                    <div id="diff-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                                    <div id="diff-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"></div>
+                                    
+                                    <div class="bg-white p-4 rounded-lg border border-indigo-100 shadow-sm">
+                                        <h4 class="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2"><i class="fa-solid fa-user-md mr-1"></i> Suggested Line of Treatment (Indian Protocol)</h4>
+                                        <p id="suggested-treatment" class="text-sm text-slate-700 leading-relaxed"></p>
+                                    </div>
                                 </div>
 
                                 <div>
@@ -198,38 +199,23 @@
 
         window.onload = () => { renderHistoryList(); };
 
-        // --- NEW: ADD & DELETE MEDICINE LOGIC ---
+        // --- EXPORT, ADD/DEL MEDICINE LOGIC (unchanged) ---
         function addMedicine() {
             if(!currentRecordId) return alert("Please generate or load a patient record first.");
-            
             const record = emrHistory.find(r => r.id === currentRecordId);
             if(record && record.data) {
                 if(!record.data.prescription) record.data.prescription = [];
-                
-                // Push a blank template
-                record.data.prescription.push({
-                    medicine: "", dosage: "", duration: "", instructions: ""
-                });
-                
-                localStorage.setItem('medscribe_history', JSON.stringify(emrHistory));
-                renderOutputUI(record.data); // Re-render to show new box
-                showToast();
+                record.data.prescription.push({ medicine: "", dosage: "", duration: "", instructions: "" });
+                localStorage.setItem('medscribe_history', JSON.stringify(emrHistory)); renderOutputUI(record.data); showToast();
             }
         }
-
         function deleteMedicine(index) {
-            if(!currentRecordId) return;
-            if(!confirm("Remove this medication?")) return;
-
+            if(!currentRecordId) return; if(!confirm("Remove this medication?")) return;
             const record = emrHistory.find(r => r.id === currentRecordId);
             if(record && record.data && record.data.prescription) {
-                record.data.prescription.splice(index, 1);
-                localStorage.setItem('medscribe_history', JSON.stringify(emrHistory));
-                renderOutputUI(record.data);
-                showToast();
+                record.data.prescription.splice(index, 1); localStorage.setItem('medscribe_history', JSON.stringify(emrHistory)); renderOutputUI(record.data); showToast();
             }
         }
-
         function exportToCSV() {
             if(emrHistory.length === 0) return alert("No patient records to export.");
             let csvContent = "data:text/csv;charset=utf-8,Date,Patient Name,Age,Gender,Subjective,Objective,Assessment,Plan\n";
@@ -243,27 +229,86 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
-        // --- SPEECH RECOGNITION ---
-        let recognition; let isRecording = false; let finalTranscript = '';
+        // --- UPGRADED SPEECH RECOGNITION (FIXED SILENCE TIMEOUT) ---
+        let recognition; 
+        let isRecording = false; 
+        let intentionalStop = true; // Tracks if the user actually clicked "Stop"
+        let finalTranscript = '';
+        
         const transcriptOutput = document.getElementById('transcript-output');
+        const recordBtn = document.getElementById('record-btn');
+        const micIcon = document.getElementById('mic-icon');
+        const recordText = document.getElementById('record-text');
+        const micPulse = document.getElementById('mic-pulse');
+
         if ('webkitSpeechRecognition' in window) {
-            recognition = new webkitSpeechRecognition(); recognition.continuous = true; recognition.interimResults = true;
-            recognition.onstart = () => { isRecording = true; document.getElementById('mic-icon').classList.replace('text-slate-600', 'text-red-500'); document.getElementById('mic-pulse').classList.remove('hidden'); document.getElementById('mic-pulse').classList.add('animate-ping'); };
+            recognition = new webkitSpeechRecognition(); 
+            recognition.continuous = true; 
+            recognition.interimResults = true;
+            recognition.lang = 'en-IN'; // Set to Indian English
+
+            recognition.onstart = () => { 
+                isRecording = true; 
+                intentionalStop = false;
+                
+                // Update UI to clearly show it is recording
+                recordBtn.classList.replace('bg-slate-100', 'bg-red-50');
+                recordBtn.classList.replace('text-slate-700', 'text-red-600');
+                recordBtn.classList.replace('border-slate-200', 'border-red-200');
+                micIcon.classList.add('fa-beat-fade');
+                recordText.innerText = "Recording... (Click to Stop)";
+                micPulse.classList.remove('hidden'); 
+                micPulse.classList.add('animate-ping'); 
+            };
+            
             recognition.onresult = (e) => {
                 let interim = '';
-                for (let i = e.resultIndex; i < e.results.length; ++i) { if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript + ' '; else interim += e.results[i][0].transcript; }
+                for (let i = e.resultIndex; i < e.results.length; ++i) { 
+                    if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript + ' '; 
+                    else interim += e.results[i][0].transcript; 
+                }
                 transcriptOutput.value = finalTranscript + interim;
             };
-            recognition.onend = () => { isRecording = false; document.getElementById('mic-icon').classList.replace('text-red-500', 'text-slate-600'); document.getElementById('mic-pulse').classList.add('hidden'); document.getElementById('mic-pulse').classList.remove('animate-ping'); autoSaveContext(); };
-        }
-        document.getElementById('record-btn').onclick = () => { if(!recognition) return alert("Mic not supported"); if(!isRecording) { recognition.lang = 'en-IN'; recognition.start(); } else { recognition.stop(); } };
+            
+            recognition.onend = () => { 
+                isRecording = false; 
+                
+                if (!intentionalStop) {
+                    // browser auto-stopped due to silence, restart it instantly!
+                    try { recognition.start(); } catch(e) { console.log("Restart error", e); }
+                    return; // Skip UI reset
+                }
 
-        // --- AUTO-SAVE ---
+                // Normal Stop UI reset
+                recordBtn.classList.replace('bg-red-50', 'bg-slate-100');
+                recordBtn.classList.replace('text-red-600', 'text-slate-700');
+                recordBtn.classList.replace('border-red-200', 'border-slate-200');
+                micIcon.classList.remove('fa-beat-fade');
+                recordText.innerText = "Start Dictation";
+                micPulse.classList.add('hidden'); 
+                micPulse.classList.remove('animate-ping'); 
+                autoSaveContext(); 
+            };
+        }
+
+        recordBtn.onclick = () => { 
+            if(!recognition) return alert("Microphone not supported in this browser."); 
+            
+            if(!isRecording) { 
+                finalTranscript = transcriptOutput.value; // Keep existing text
+                intentionalStop = false;
+                recognition.start(); 
+            } else { 
+                intentionalStop = true; // Tell the auto-restarter to stand down
+                recognition.stop(); 
+            } 
+        };
+
+        // --- AUTO-SAVE LOGIC ---
         function showToast() {
             const toast = document.getElementById('save-toast'); toast.classList.remove('opacity-0'); toast.classList.add('opacity-100');
             clearTimeout(toastTimeout); toastTimeout = setTimeout(() => { toast.classList.remove('opacity-100'); toast.classList.add('opacity-0'); }, 2000);
         }
-
         function autoSaveContext() {
             if(!currentRecordId) return;
             const record = emrHistory.find(r => r.id === currentRecordId);
@@ -274,17 +319,14 @@
                 localStorage.setItem('medscribe_history', JSON.stringify(emrHistory)); updateRecordMeta(record); renderHistoryList(); showToast();
             }
         }
-
         function autoSaveData(section, key, value) {
             if(!currentRecordId) return; const record = emrHistory.find(r => r.id === currentRecordId);
             if(record && record.data[section]) { record.data[section][key] = value; localStorage.setItem('medscribe_history', JSON.stringify(emrHistory)); showToast(); }
         }
-
         function autoSaveRx(index, key, value) {
             if(!currentRecordId) return; const record = emrHistory.find(r => r.id === currentRecordId);
             if(record && record.data.prescription[index]) { record.data.prescription[index][key] = value; localStorage.setItem('medscribe_history', JSON.stringify(emrHistory)); showToast(); }
         }
-
         function saveRecordToHistory(parsedData) {
             const newRecord = {
                 id: Date.now().toString(), date: new Date().toLocaleString(),
@@ -295,7 +337,6 @@
             emrHistory.unshift(newRecord); localStorage.setItem('medscribe_history', JSON.stringify(emrHistory));
             currentRecordId = newRecord.id; renderHistoryList(); updateRecordMeta(newRecord);
         }
-
         function renderHistoryList() {
             const listContainer = document.getElementById('history-list'); listContainer.innerHTML = '';
             if(emrHistory.length === 0) { listContainer.innerHTML = '<div class="text-center text-xs text-slate-500 mt-10">No records found.</div>'; return; }
@@ -313,29 +354,29 @@
                     </div>`);
             });
         }
-
         function loadRecord(id) {
             const record = emrHistory.find(r => r.id === id); if(!record) return;
-            currentRecordId = id; finalTranscript = record.transcript;
+            currentRecordId = id; finalTranscript = record.transcript; intentionalStop = true;
+            if(recognition && isRecording) recognition.stop(); // Stop recording if switching patients
+            
             document.getElementById('patient-name').value = record.patientName === "Unknown Patient" ? "" : record.patientName;
             document.getElementById('patient-age').value = record.age || ""; document.getElementById('patient-gender').value = record.gender || "";
             document.getElementById('transcript-output').value = record.transcript;
             renderHistoryList(); updateRecordMeta(record); renderOutputUI(record.data);
         }
-
         function deleteRecord(id, event) {
             event.stopPropagation(); if(!confirm("Delete this patient record?")) return;
             emrHistory = emrHistory.filter(r => r.id !== id); localStorage.setItem('medscribe_history', JSON.stringify(emrHistory));
             if(currentRecordId === id) startNewSession(); else renderHistoryList();
         }
-
         function startNewSession() {
-            currentRecordId = null; finalTranscript = '';
+            currentRecordId = null; finalTranscript = ''; intentionalStop = true;
+            if(recognition && isRecording) recognition.stop();
+            
             ['patient-name', 'patient-age', 'patient-gender', 'transcript-output'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('output-area').classList.add('hidden'); document.getElementById('status-msg').classList.remove('hidden'); document.getElementById('action-buttons').classList.add('hidden'); document.getElementById('record-meta').innerText = "Unsaved Session";
             renderHistoryList(); 
         }
-
         function updateRecordMeta(record) {
             let details = []; if(record.age) details.push(`${record.age} Yrs`); if(record.gender) details.push(record.gender === 'M' ? 'Male' : record.gender === 'F' ? 'Female' : 'Other');
             document.getElementById('record-meta').innerHTML = `<b>${record.patientName}</b>${details.length > 0 ? ' | '+details.join(', ') : ''} &nbsp;&bull;&nbsp; ${record.date}`;
@@ -349,10 +390,14 @@
 
             document.getElementById('btn-text').innerText = "Processing..."; document.getElementById('btn-spinner').classList.remove('hidden'); document.getElementById('gen-btn').disabled = true;
             
-            const systemPrompt = `Extract SOAP notes and Rx. Analyze symptoms and generate up to 3 Differential Diagnoses.
+            // NEW PROMPT: Added Indian context and Suggested Treatment
+            const systemPrompt = `You are a Medical AI Scribe and Clinical Decision Support System tailored for Indian clinical practice.
+            Extract SOAP notes and Rx. Analyze symptoms and generate up to 3 Differential Diagnoses.
+            Also provide a Suggested Line of Treatment, mentioning common Indian medicine brand names (e.g., Dolo 650, Pan-D, Monocef, Augmentin) and standard Indian clinical protocols where applicable.
             Return ONLY RAW JSON in this format:
             {
                 "differentials": [ { "condition": "...", "probability": "number 1-100", "reasoning": "..." } ],
+                "suggestedTreatment": "...",
                 "soap": { "subjective": "...", "objective": "...", "assessment": "...", "plan": "..." },
                 "prescription": [ { "medicine": "...", "dosage": "...", "duration": "...", "instructions": "..." } ]
             }`;
@@ -372,7 +417,7 @@
                 renderOutputUI(emrHistory.find(r => r.id === currentRecordId).data);
 
             } catch (error) { showError(error.message); } 
-            finally { document.getElementById('btn-text').innerText = "Generate Note"; document.getElementById('btn-spinner').classList.add('hidden'); document.getElementById('gen-btn').disabled = false; }
+            finally { document.getElementById('btn-text').innerText = "Generate AI Note"; document.getElementById('btn-spinner').classList.add('hidden'); document.getElementById('gen-btn').disabled = false; }
         }
 
         function showError(msg) { document.getElementById('error-box').innerText = msg; document.getElementById('error-box').classList.remove('hidden'); }
@@ -385,13 +430,20 @@
             outputArea.classList.add('animate-fade-in'); outputArea.classList.remove('hidden');
             document.getElementById('action-buttons').classList.remove('hidden');
 
-            const diffSection = document.getElementById('differential-section'); const diffList = document.getElementById('diff-list'); diffList.innerHTML = "";
+            const diffSection = document.getElementById('differential-section'); 
+            const diffList = document.getElementById('diff-list'); 
+            const treatmentText = document.getElementById('suggested-treatment');
+            diffList.innerHTML = "";
+            
             if(data.differentials && data.differentials.length > 0) {
                 diffSection.classList.remove('hidden');
                 data.differentials.forEach(diff => {
                     const prob = parseInt(diff.probability) || 0; let colorClass = prob > 70 ? 'bg-red-500' : prob > 40 ? 'bg-amber-500' : 'bg-green-500';
                     diffList.innerHTML += `<div class="bg-white p-3 rounded-lg border border-slate-100 shadow-sm"><div class="flex justify-between items-center mb-1"><span class="font-bold text-slate-800 text-sm">${diff.condition}</span><span class="text-xs font-bold text-slate-500">${prob}%</span></div><div class="w-full bg-slate-100 rounded-full h-1.5 mb-2"><div class="${colorClass} h-1.5 rounded-full" style="width: ${prob}%"></div></div><p class="text-[11px] text-slate-500 leading-snug">${diff.reasoning}</p></div>`;
                 });
+                
+                // NEW: Render Suggested Treatment
+                treatmentText.innerText = data.suggestedTreatment || "No specific treatment line suggested. Please review symptoms.";
             } else diffSection.classList.add('hidden');
 
             ['subjective', 'objective', 'assessment', 'plan'].forEach(key => document.getElementById(`soap-${key.charAt(0)}`).innerText = data.soap?.[key] || "");
@@ -410,9 +462,7 @@
                                 </div>
                                 <p class="text-xs text-brand-600 mt-3 flex items-start print:text-slate-600"><i class="fa-solid fa-info-circle mr-1.5 mt-0.5 opacity-50 print:hidden"></i> <span contenteditable="true" data-placeholder="Instructions" class="italic flex-grow" onblur="autoSaveRx(${index}, 'instructions', this.innerText)">${med.instructions || ""}</span></p>
                             </div>
-                            <button onclick="deleteMedicine(${index})" class="absolute top-4 right-4 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity print:hidden" title="Remove medication">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
+                            <button onclick="deleteMedicine(${index})" class="absolute top-4 right-4 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity print:hidden" title="Remove medication"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
                     `;
                 });
