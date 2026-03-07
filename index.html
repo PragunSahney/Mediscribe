@@ -1,659 +1,211 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MedScribe AI v2</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;color:#1a202c;min-height:100vh}
-header{background:linear-gradient(135deg,#1a56db,#0e3fa8);color:#fff;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-header h1{font-size:1.4rem;font-weight:700}
-header span{font-size:.85rem;opacity:.8}
-.badge{background:#f59e0b;color:#1a202c;font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:8px}
-.v2badge{background:#10b981;color:#fff;font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px}
-.container{max-width:980px;margin:0 auto;padding:20px 16px}
-
-/* API Key Banner */
-.api-banner{background:#fff;border:2px solid #1a56db;border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.api-banner .icon{font-size:1.8rem;flex-shrink:0}
-.api-banner h3{font-size:.95rem;font-weight:700;color:#1a56db;margin-bottom:4px}
-.api-banner p{font-size:.82rem;color:#64748b;line-height:1.5}
-.api-input-row{display:flex;gap:8px;margin-top:10px;width:100%}
-.api-input-row input{flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:.875rem;outline:none;font-family:monospace}
-.api-input-row input:focus{border-color:#1a56db}
-.api-input-row button{background:#1a56db;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:.875rem;font-weight:600;cursor:pointer;white-space:nowrap}
-.api-status{font-size:.78rem;margin-top:6px}
-.api-status.ok{color:#059669}
-.api-status.err{color:#dc2626}
-
-.patient-bar{background:#fff;border-radius:12px;padding:14px 18px;display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
-.patient-bar input,.patient-bar select{flex:1;min-width:130px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 11px;font-size:.875rem;outline:none}
-.patient-bar input:focus,.patient-bar select:focus{border-color:#1a56db}
-
-.main-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-@media(max-width:680px){.main-grid{grid-template-columns:1fr}}
-
-.card{background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.07);overflow:hidden}
-.card-header{padding:13px 18px;font-weight:600;font-size:.93rem;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:8px;background:#fafbfc}
-.card-body{padding:16px 18px}
-
-/* Recording */
-.rec-zone{text-align:center;padding:6px 0 14px}
-.rec-btn{width:76px;height:76px;border-radius:50%;border:none;cursor:pointer;font-size:1.9rem;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;transition:all .2s}
-.rec-btn.idle{background:#1a56db;color:#fff;box-shadow:0 4px 12px rgba(26,86,219,.4)}
-.rec-btn.idle:hover{transform:scale(1.06)}
-.rec-btn.recording{background:#dc2626;color:#fff;animation:pulse 1.2s infinite}
-.rec-btn.processing{background:#6b7280;color:#fff;cursor:not-allowed}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(220,38,38,.4)}70%{box-shadow:0 0 0 16px rgba(220,38,38,0)}100%{box-shadow:0 0 0 0 rgba(220,38,38,0)}}
-.rec-status{font-size:.875rem;color:#64748b;margin-bottom:4px;min-height:20px}
-.rec-timer{font-size:1.3rem;font-weight:700;color:#dc2626;min-height:24px}
-
-.divider{text-align:center;color:#94a3b8;font-size:.78rem;margin:12px 0;position:relative}
-.divider::before,.divider::after{content:'';position:absolute;top:50%;width:38%;height:1px;background:#e2e8f0}
-.divider::before{left:0}.divider::after{right:0}
-
-.lang-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
-.lang-row label{font-size:.8rem;color:#64748b;white-space:nowrap}
-.lang-row select{font-size:.8rem;padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;outline:none}
-
-textarea.tinput{width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px 12px;font-size:.875rem;resize:vertical;min-height:130px;outline:none;font-family:inherit;line-height:1.55;transition:border .2s}
-textarea.tinput:focus{border-color:#1a56db}
-
-.btn{width:100%;padding:11px;border:none;border-radius:8px;font-size:.93rem;font-weight:600;cursor:pointer;transition:all .2s;margin-top:8px}
-.btn-primary{background:#1a56db;color:#fff}
-.btn-primary:hover:not(:disabled){background:#1648c0}
-.btn-primary:disabled{background:#93c5fd;cursor:not-allowed}
-.btn-outline{background:#fff;color:#1a56db;border:1.5px solid #1a56db}
-.btn-outline:hover:not(:disabled){background:#eff6ff}
-
-/* Output */
-.out-full{grid-column:1/-1}
-.tabs{display:flex;border-bottom:2px solid #e2e8f0;background:#fafbfc}
-.tab{padding:10px 20px;font-size:.88rem;font-weight:600;cursor:pointer;color:#64748b;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s}
-.tab.active{color:#1a56db;border-bottom-color:#1a56db;background:#fff}
-.tab-content{display:none;padding:20px}
-.tab-content.active{display:block}
-
-.soap-sec{margin-bottom:16px}
-.soap-lbl{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#1a56db;margin-bottom:5px}
-.soap-val{background:#f8fafc;border-radius:8px;padding:10px 13px;font-size:.875rem;line-height:1.65;color:#374151;border-left:3px solid #1a56db;white-space:pre-wrap}
-
-.rx-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #e2e8f0}
-.rx-logo{font-size:1.2rem;font-weight:800;color:#1a56db}
-.rx-logo small{font-size:.72rem;font-weight:400;color:#64748b;display:block}
-.rx-dr{text-align:right;font-size:.8rem;color:#64748b;line-height:1.5}
-.rx-pt{background:#f8fafc;border-radius:8px;padding:9px 13px;margin-bottom:12px;font-size:.84rem;line-height:1.6}
-.med{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:11px 13px;margin-bottom:8px;border-left:3px solid #10b981}
-.med-name{font-weight:700;font-size:.93rem}
-.med-det{font-size:.8rem;color:#64748b;margin-top:2px}
-.med-inst{font-size:.8rem;color:#374151;margin-top:3px;font-style:italic}
-.info-box{border-radius:8px;padding:9px 13px;margin-top:8px;font-size:.84rem}
-.info-inv{background:#fff7ed;border:1px solid #fed7aa}
-.info-adv{background:#f0fdf4;border:1px solid #bbf7d0}
-.rx-foot{margin-top:14px;padding-top:10px;border-top:1px dashed #e2e8f0;font-size:.76rem;color:#94a3b8}
-
-.action-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
-.action-row .btn{width:auto;flex:1;min-width:110px;font-size:.82rem;padding:8px 10px;margin-top:0}
-
-.empty{text-align:center;padding:40px 20px;color:#94a3b8}
-.empty .eicon{font-size:2.8rem;margin-bottom:10px}
-
-.spinner{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 20px;gap:14px}
-.dots{display:inline-flex;gap:5px}
-.dots span{width:9px;height:9px;border-radius:50%;background:#1a56db;animation:db 1.2s infinite}
-.dots span:nth-child(2){animation-delay:.2s}
-.dots span:nth-child(3){animation-delay:.4s}
-@keyframes db{0%,80%,100%{transform:scale(.6);opacity:.5}40%{transform:scale(1);opacity:1}}
-.spin-msg{font-size:.93rem;font-weight:600;color:#374151}
-.spin-sub{font-size:.82rem;color:#94a3b8}
-
-.alert{border-radius:8px;padding:9px 13px;font-size:.84rem;margin-top:8px;display:flex;align-items:flex-start;gap:6px}
-.alert-info{background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe}
-.alert-err{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
-.alert-ok{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
-.alert-warn{background:#fefce8;color:#854d0e;border:1px solid #fde047}
-
-.disc{background:#fefce8;border:1px solid #fde047;border-radius:8px;padding:9px 13px;font-size:.76rem;color:#854d0e;margin-top:14px;line-height:1.5}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedScribe | 100% Free Prototype v4</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body>
+<body class="bg-slate-50 font-sans text-slate-900">
 
-<header>
-  <div>
-    <h1>🩺 MedScribe AI <span class="badge">BETA</span><span class="v2badge">v2</span></h1>
-    <span>AI-powered clinical documentation for Indian doctors</span>
-  </div>
-  <div style="font-size:.78rem;opacity:.7;text-align:right">Powered by Claude AI</div>
-</header>
-
-<div class="container">
-
-  <!-- API Key Setup -->
-  <div class="api-banner">
-    <div class="icon">🔑</div>
-    <div style="flex:1">
-      <h3>Enter your Anthropic API Key to activate</h3>
-      <p>Your key is stored only in your browser — never sent anywhere except directly to Anthropic's servers. Get a free key at <strong>console.anthropic.com</strong> → API Keys.</p>
-      <div class="api-input-row">
-        <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." />
-        <button onclick="saveKey()">Save Key</button>
-      </div>
-      <div class="api-status" id="apiStatus"></div>
-    </div>
-  </div>
-
-  <!-- Patient Bar -->
-  <div class="patient-bar">
-    <input type="text" id="pName" placeholder="Patient Name" />
-    <input type="text" id="pAge"  placeholder="Age" style="max-width:75px"/>
-    <select id="pGender"><option value="">Gender</option><option>Male</option><option>Female</option><option>Other</option></select>
-    <input type="text" id="dName" placeholder="Dr. Name" />
-    <input type="text" id="cName" placeholder="Clinic / Hospital" />
-  </div>
-
-  <div class="main-grid">
-
-    <!-- Input Card -->
-    <div class="card">
-      <div class="card-header">🎙️ Consultation Input</div>
-      <div class="card-body">
-
-        <div class="lang-row">
-          <label>Language:</label>
-          <select id="lang">
-            <option value="English">English</option>
-            <option value="Hindi">Hindi / हिंदी</option>
-            <option value="Hinglish (Hindi-English mixed)">Hinglish (Mixed)</option>
-            <option value="Tamil">Tamil</option>
-            <option value="Telugu">Telugu</option>
-            <option value="Marathi">Marathi</option>
-            <option value="Bengali">Bengali</option>
-          </select>
-          <label style="margin-left:8px">Specialty:</label>
-          <select id="specialty">
-            <option>General Medicine</option>
-            <option>Pediatrics</option>
-            <option>Gynecology</option>
-            <option>Cardiology</option>
-            <option>Orthopedics</option>
-            <option>Dermatology</option>
-            <option>ENT</option>
-            <option>Psychiatry</option>
-          </select>
+    <nav class="bg-teal-700 text-white p-4 shadow-lg flex justify-between items-center">
+        <h1 class="text-xl font-bold"><i class="fa-solid fa-leaf mr-2"></i>MedScribe <span class="text-teal-200 text-sm font-light">$0 COST PROTOTYPE</span></h1>
+        
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-key text-sm"></i>
+            <input type="password" id="api-key" placeholder="Paste Gemini Free API Key" class="text-black text-sm px-2 py-1 rounded outline-none w-64 border border-teal-500">
         </div>
+    </nav>
 
-        <div class="rec-zone">
-          <button class="rec-btn idle" id="recBtn" onclick="toggleRec()">🎤</button>
-          <div class="rec-status" id="recStatus">Click mic to record consultation</div>
-          <div class="rec-timer" id="recTimer"></div>
+    <main class="container mx-auto p-4 max-w-5xl mt-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold text-teal-800">1. Free Web Speech Dictation</h2>
+                    <select id="language-select" class="text-sm p-1 border rounded outline-teal-500">
+                        <option value="en-IN">English (India) / Hinglish</option>
+                        <option value="hi-IN">Hindi</option>
+                    </select>
+                </div>
+                
+                <button id="record-btn" class="w-full h-24 border-2 border-dashed border-teal-300 bg-teal-50 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-teal-100 transition-all">
+                    <i id="mic-icon" class="fa-solid fa-microphone text-3xl text-teal-600"></i>
+                    <p class="mt-2 text-sm text-teal-800 font-medium" id="mic-text">Click to Start Listening (Browser Native)</p>
+                </button>
+                
+                <h3 class="text-sm font-semibold mt-6 mb-2 text-slate-600">Live Transcript:</h3>
+                <textarea id="transcript-output" rows="5" class="w-full p-3 text-sm border rounded-lg bg-slate-50 focus:outline-teal-500" placeholder="Start speaking... text will appear here live."></textarea>
+                
+                <button onclick="generateWithGemini()" id="gen-btn" class="w-full mt-4 bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-lg shadow-md flex justify-center items-center transition-colors">
+                    <span id="btn-text">Generate Notes (Free Gemini)</span>
+                    <i id="btn-spinner" class="fa-solid fa-circle-notch fa-spin ml-2 hidden"></i>
+                </button>
+
+                <div id="error-box" class="hidden mt-4 p-3 bg-red-100 border border-red-400 text-red-700 text-sm rounded"></div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-lg font-semibold mb-4 text-teal-800">2. AI Output</h2>
+                
+                <div id="output-area" class="space-y-6 hidden">
+                    <div class="p-4 bg-teal-50 rounded-lg border border-teal-100">
+                        <h3 class="font-bold text-teal-800 border-b border-teal-200 pb-2 mb-2">SOAP Note</h3>
+                        <p class="text-sm mb-1"><strong>S:</strong> <span id="soap-s"></span></p>
+                        <p class="text-sm mb-1"><strong>O:</strong> <span id="soap-o"></span></p>
+                        <p class="text-sm mb-1"><strong>A:</strong> <span id="soap-a"></span></p>
+                        <p class="text-sm"><strong>P:</strong> <span id="soap-p"></span></p>
+                    </div>
+
+                    <div class="p-4 border rounded-lg border-slate-200">
+                        <h3 class="font-bold border-b pb-2 mb-3 text-slate-800">Rx - Prescription</h3>
+                        <div id="rx-list" class="space-y-3"></div>
+                    </div>
+                </div>
+                
+                <p id="status-msg" class="text-center text-slate-400 mt-10">Use Chrome browser for best results.</p>
+            </div>
         </div>
+    </main>
 
-        <div class="divider">or type / paste transcript below</div>
+    <script>
+        // --- 1. FREE BROWSER SPEECH TO TEXT ---
+        let recognition;
+        let isRecording = false;
+        let finalTranscript = '';
 
-        <textarea class="tinput" id="txInput" placeholder="Paste or type the doctor-patient conversation here...
+        const recordBtn = document.getElementById('record-btn');
+        const micIcon = document.getElementById('mic-icon');
+        const micText = document.getElementById('mic-text');
+        const transcriptOutput = document.getElementById('transcript-output');
+        const langSelect = document.getElementById('language-select');
 
-Example:
-Doctor: What brings you in today?
-Patient: Fever for 3 days, around 101°F, bad headache and body pain.
-Doctor: Any cough or cold?
-Patient: No cough. Slight sore throat. Eyes burning.
-Doctor: BP 120/80, throat inflamed, chest clear. Looks like viral fever.
-Doctor: Prescribing paracetamol, azithromycin, and ORS. Rest for 2 days."></textarea>
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
 
-        <div id="inlineAlert"></div>
+            recognition.onstart = function() {
+                isRecording = true;
+                micIcon.classList.add('animate-pulse', 'text-red-500');
+                micIcon.classList.remove('text-teal-600');
+                micText.innerText = "Listening live... Click to Stop";
+            };
 
-        <button class="btn btn-primary" id="genBtn" onclick="generate()">✨ Generate SOAP Note + Prescription</button>
-        <button class="btn btn-outline" onclick="clearAll()">🗑 Clear Everything</button>
+            recognition.onresult = function(event) {
+                let interimTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript + ' ';
+                    } else {
+                        interimTranscript += event.results[i][0].transcript;
+                    }
+                }
+                transcriptOutput.value = finalTranscript + interimTranscript;
+            };
 
-        <div class="disc">⚠️ Doctor must review all AI-generated content before use. AI assists documentation only — clinical judgment remains with the doctor.</div>
-      </div>
-    </div>
+            recognition.onerror = function(event) {
+                console.error("Speech recognition error", event.error);
+                if(event.error === 'not-allowed') alert("Please allow microphone permissions in your browser.");
+            };
 
-    <!-- Tips Card -->
-    <div class="card">
-      <div class="card-header">💡 How to Get Best Results</div>
-      <div class="card-body" style="font-size:.875rem;line-height:1.75;color:#374151">
-        <p><strong>🗣 During the consultation, mention:</strong></p>
-        <ul style="padding-left:16px;margin:8px 0 14px">
-          <li>Chief complaint + duration ("fever for 3 days")</li>
-          <li>Associated symptoms ("headache, body pain")</li>
-          <li>Vitals aloud ("BP is 130/85, temp 101°F")</li>
-          <li>Examination findings</li>
-          <li>Diagnosis and reasoning</li>
-          <li>Medicine names and doses</li>
-        </ul>
-        <p><strong>🤖 What AI will auto-infer:</strong></p>
-        <ul style="padding-left:16px;margin:8px 0 14px">
-          <li>Standard drug doses if not mentioned</li>
-          <li>Typical advice for the diagnosis</li>
-          <li>Follow-up timeframe</li>
-          <li>ICD-10 relevant diagnosis codes</li>
-        </ul>
-        <p><strong>🌐 Language tip:</strong></p>
-        <ul style="padding-left:16px;margin:8px 0">
-          <li>Select the language before recording</li>
-          <li>Hinglish (mixed) works well for most Indian consultations</li>
-        </ul>
-      </div>
-    </div>
+            recognition.onend = function() {
+                isRecording = false;
+                micIcon.classList.remove('animate-pulse', 'text-red-500');
+                micIcon.classList.add('text-teal-600');
+                micText.innerText = "Click to Start Listening (Browser Native)";
+            };
+        } else {
+            alert("Speech Recognition API not supported in this browser. Please use Google Chrome.");
+            recordBtn.disabled = true;
+        }
 
-    <!-- Loading -->
-    <div class="card out-full" id="loadCard" style="display:none">
-      <div class="spinner">
-        <div class="dots"><span></span><span></span><span></span></div>
-        <div class="spin-msg">Generating clinical documentation...</div>
-        <div class="spin-sub" id="spinMsg">Analysing consultation transcript</div>
-      </div>
-    </div>
+        recordBtn.onclick = () => {
+            if (!isRecording) {
+                recognition.lang = langSelect.value;
+                recognition.start();
+            } else {
+                recognition.stop();
+            }
+        };
 
-    <!-- Output -->
-    <div class="card out-full" id="outCard" style="display:none">
-      <div class="card-header">
-        📋 Generated Documentation
-        <span style="background:#dcfce7;color:#166534;font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:4px">AI Generated</span>
-        <span style="margin-left:auto;font-size:.73rem;color:#94a3b8;font-weight:400" id="genTime"></span>
-      </div>
-      <div class="tabs">
-        <div class="tab active" onclick="switchTab('soap')">📋 SOAP Note</div>
-        <div class="tab" onclick="switchTab('rx')">💊 Prescription</div>
-        <div class="tab" onclick="switchTab('sum')">📝 Summary</div>
-        <div class="tab" onclick="switchTab('raw')">🎙 Transcript</div>
-      </div>
+        // --- 2. FREE GEMINI AI GENERATION ---
+        async function generateWithGemini() {
+            const errorBox = document.getElementById('error-box');
+            errorBox.classList.add('hidden'); // Hide previous errors
+            
+            // Trim whitespace/hidden characters from API key
+            const apiKey = document.getElementById('api-key').value.trim(); 
+            const transcript = transcriptOutput.value.trim();
+            
+            if(!apiKey) {
+                alert("Please paste your Google Gemini API Key at the top!");
+                return;
+            }
+            if(!transcript) {
+                alert("Please record some audio or type a transcript first.");
+                return;
+            }
 
-      <div class="tab-content active" id="tab-soap">
-        <div id="soapOut"></div>
-        <div class="action-row">
-          <button class="btn btn-primary action-row" onclick="doPrint('soap')">🖨 Print SOAP</button>
-          <button class="btn btn-outline" onclick="doCopy('soap')">📋 Copy</button>
-        </div>
-      </div>
+            document.getElementById('btn-text').innerText = "Analyzing Clinically...";
+            document.getElementById('btn-spinner').classList.remove('hidden');
+            document.getElementById('gen-btn').disabled = true;
+            
+            const systemPrompt = `You are an expert Indian Clinical Scribe. Read the transcript (which may be in English, Hindi, or Hinglish). 
+            Extract the medical data and return ONLY RAW JSON.
+            Rules:
+            1. Use standard Indian brand names (e.g., Dolo 650, Augmentin 625, Pan D) based on symptoms.
+            2. Use standard Indian dosing formats (e.g., 1-0-1, SOS).
+            3. Infer durations (e.g., 3 days) if implied.
+            
+            DO NOT output any markdown (no \`\`\`json). DO NOT output conversational text. Output ONLY this exact JSON structure:
+            {
+                "soap": {
+                    "subjective": "...",
+                    "objective": "...",
+                    "assessment": "...",
+                    "plan": "..."
+                },
+                "prescription": [
+                    { "medicine": "...", "dosage": "...", "duration": "...", "instructions": "..." }
+                ]
+            }`;
 
-      <div class="tab-content" id="tab-rx">
-        <div id="rxOut"></div>
-        <div class="action-row">
-          <button class="btn btn-primary" onclick="doPrint('rx')">🖨 Print Rx</button>
-          <button class="btn btn-outline" onclick="doWhatsApp()">💬 WhatsApp</button>
-          <button class="btn btn-outline" onclick="doCopy('rx')">📋 Copy</button>
-        </div>
-      </div>
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{ text: systemPrompt + "\n\nTranscript:\n" + transcript }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.1 // Keeps the AI strict and focused
+                        }
+                    })
+                });
 
-      <div class="tab-content" id="tab-sum">
-        <div id="sumOut"></div>
-        <div class="action-row">
-          <button class="btn btn-outline" onclick="doCopy('sum')">📋 Copy Summary</button>
-        </div>
-      </div>
+                const data = await response.json();
+                
+                // Check if Google's API returned an authentication/quota error
+                if(data.error) {
+                    throw new Error(`API Error: ${data.error.message}`);
+                }
 
-      <div class="tab-content" id="tab-raw">
-        <div id="rawOut" style="font-size:.875rem;line-height:1.65;color:#374151;white-space:pre-wrap;background:#f8fafc;border-radius:8px;padding:14px"></div>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<script>
-// ── State ──────────────────────────────────────────────────────
-let apiKey = localStorage.getItem('medscribe_key') || '';
-let mediaRecorder = null, audioChunks = [], isRec = false;
-let timerInt = null, secs = 0;
-let storeSOAP = '', storeRx = '', storeSum = '';
-const spinMsgs = ['Analysing transcript...','Identifying symptoms & findings...','Building SOAP structure...','Generating prescription...','Inferring standard dosages...','Checking drug details...','Finalising documentation...'];
-
-// ── API Key ────────────────────────────────────────────────────
-if (apiKey) showKeyStatus(true);
-
-function saveKey() {
-  const v = document.getElementById('apiKeyInput').value.trim();
-  if (!v.startsWith('sk-ant')) { showKeyStatus(false, 'Key should start with sk-ant-...'); return; }
-  apiKey = v;
-  localStorage.setItem('medscribe_key', v);
-  showKeyStatus(true);
-}
-
-function showKeyStatus(ok, msg) {
-  const el = document.getElementById('apiStatus');
-  if (ok) {
-    el.className = 'api-status ok';
-    el.textContent = '✅ API key saved — ready to generate notes';
-    document.getElementById('apiKeyInput').value = apiKey.slice(0,18) + '••••••••••••';
-  } else {
-    el.className = 'api-status err';
-    el.textContent = '❌ ' + (msg || 'Invalid key');
-  }
-}
-
-// ── Recording ──────────────────────────────────────────────────
-async function toggleRec() {
-  if (!isRec) await startRec(); else stopRec();
-}
-
-async function startRec() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRecorder = new MediaRecorder(stream);
-    audioChunks = [];
-    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-    mediaRecorder.onstop = onRecStop;
-    mediaRecorder.start();
-    isRec = true; secs = 0;
-    setBtn('recording', '⏹', 'Recording... click to stop');
-    document.getElementById('recTimer').textContent = '0:00';
-    timerInt = setInterval(() => {
-      secs++;
-      const m = Math.floor(secs/60), s = secs%60;
-      document.getElementById('recTimer').textContent = `${m}:${s.toString().padStart(2,'0')}`;
-    }, 1000);
-  } catch(e) {
-    showInline('❌ Microphone access denied. Please allow mic in browser settings, or type the consultation below.', 'err');
-  }
-}
-
-function stopRec() {
-  if (mediaRecorder) { mediaRecorder.stop(); mediaRecorder.stream.getTracks().forEach(t=>t.stop()); }
-  clearInterval(timerInt);
-  isRec = false;
-  setBtn('processing', '⏳', 'Processing audio...');
-}
-
-function onRecStop() {
-  // Real Whisper transcription needs a backend server.
-  // For now we populate a realistic demo transcript and inform the user.
-  setBtn('idle', '🎤', '✅ Recording done — review transcript below, then generate');
-  document.getElementById('recTimer').textContent = `${Math.floor(secs/60)}m ${secs%60}s recorded`;
-
-  const sample = `Doctor: Good morning, please sit down. What brings you in today?
-Patient: Good morning doctor. I have had fever since 2 days — around 101 to 102 degree. Also very bad body pain and headache.
-Doctor: Any cough, cold, or sore throat?
-Patient: Slight sore throat. No cough. Eyes are also little burning.
-Doctor: Appetite? Any vomiting or loose motions?
-Patient: Appetite is very poor. No vomiting. One loose motion yesterday.
-Doctor: Any previous history of malaria or typhoid?
-Patient: No, I am otherwise healthy. No chronic illness, no regular medicines.
-Doctor: Let me examine you. Temperature 101.8°F. Blood pressure 118/76. Pulse 88 regular. Throat — mildly congested. No lymph nodes palpable. Chest is clear. Abdomen soft, no tenderness.
-Doctor: This looks like acute viral fever with pharyngitis. I will give you paracetamol 650mg for fever, azithromycin 500mg antibiotic for 5 days, pantoprazole for stomach protection, and cetirizine for the throat irritation. Also take ORS for hydration. Drink plenty of fluids, avoid outside food. Rest for at least 2 days. Come back after 3 days or earlier if fever doesn't reduce.`;
-
-  document.getElementById('txInput').value = sample;
-  showInline('✅ Recording processed! The transcript above was auto-filled as a demo. In the full version, your actual recorded audio will be transcribed here via Whisper AI. Review and click Generate.', 'ok');
-}
-
-function setBtn(state, icon, status) {
-  const b = document.getElementById('recBtn');
-  b.className = 'rec-btn ' + state;
-  b.textContent = icon;
-  document.getElementById('recStatus').textContent = status;
-}
-
-// ── Generate ───────────────────────────────────────────────────
-async function generate() {
-  if (!apiKey) { showInline('❌ Please enter your Anthropic API key at the top first.', 'err'); return; }
-  const tx = document.getElementById('txInput').value.trim();
-  if (!tx) { showInline('❌ Please record a consultation or type/paste the transcript first.', 'err'); return; }
-
-  const pName = document.getElementById('pName').value || 'Patient';
-  const pAge  = document.getElementById('pAge').value  || 'N/A';
-  const pGender = document.getElementById('pGender').value || 'N/A';
-  const dName = document.getElementById('dName').value || 'Doctor';
-  const cName = document.getElementById('cName').value || 'Clinic';
-  const lang  = document.getElementById('lang').value;
-  const spec  = document.getElementById('specialty').value;
-  const date  = new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
-
-  document.getElementById('outCard').style.display = 'none';
-  document.getElementById('loadCard').style.display = 'block';
-  document.getElementById('genBtn').disabled = true;
-  document.getElementById('inlineAlert').innerHTML = '';
-
-  let mi = 0;
-  const spinInt = setInterval(() => {
-    document.getElementById('spinMsg').textContent = spinMsgs[mi++ % spinMsgs.length];
-  }, 1600);
-
-  const prompt = `You are an expert AI medical scribe assistant for Indian doctors. Your job is to analyse the consultation transcript below and generate comprehensive, accurate clinical documentation.
-
-IMPORTANT RULES:
-1. Extract ALL clinical information mentioned — do not skip anything spoken
-2. For medicines mentioned without a dose, infer the standard Indian adult dose
-3. If a medicine type is mentioned (e.g. "antibiotic", "fever medicine") but no name given, suggest the most appropriate common Indian medicine
-4. Always generate at least 3-5 medicines in the prescription for a typical consultation
-5. The consultation may be in ${lang} — translate and interpret correctly
-6. Specialty context: ${spec}
-7. Generate patient-friendly advice relevant to Indian context
-8. Always include follow-up instructions
-
-PATIENT: ${pName}, Age: ${pAge}, Gender: ${pGender}
-DOCTOR: ${dName} | CLINIC: ${cName} | DATE: ${date}
-
-TRANSCRIPT:
-${tx}
-
-Return ONLY a valid JSON object with this exact structure — no markdown, no explanation:
-{
-  "soap": {
-    "subjective": "Chief complaint, HPI with duration and severity, associated symptoms, past medical history, current medications, allergies, family/social history as relevant",
-    "objective": "Vital signs (temp, BP, pulse, SpO2 if mentioned), physical examination findings, relevant investigations mentioned or pending",
-    "assessment": "Primary diagnosis with ICD-10 code if applicable. Differential diagnoses if relevant. Clinical reasoning.",
-    "plan": "Complete treatment plan: medications, investigations ordered, referrals, patient education, dietary advice, activity restrictions, follow-up plan"
-  },
-  "prescription": {
-    "diagnosis": "Primary diagnosis",
-    "medicines": [
-      {
-        "name": "Generic medicine name",
-        "dose": "e.g. 500mg",
-        "route": "Oral",
-        "frequency": "e.g. Twice daily (BD)",
-        "duration": "e.g. 5 days",
-        "instruction": "e.g. After food with water"
-      }
-    ],
-    "investigations": "Lab tests or imaging ordered, or 'None at this time'",
-    "advice": "Patient advice: diet, hydration, rest, activity, warning signs to watch for",
-    "followUp": "When to return and under what circumstances"
-  },
-  "summary": "A 2-3 sentence plain English summary of this consultation suitable for patient records. Include diagnosis and key treatment points."
-}`;
-
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    clearInterval(spinInt);
-
-    if (!res.ok) {
-      const errData = await res.json().catch(()=>({}));
-      const msg = errData?.error?.message || `HTTP ${res.status}`;
-      if (res.status === 401) throw new Error('Invalid API key. Please check and re-enter your key at the top.');
-      if (res.status === 429) throw new Error('API rate limit reached. Please wait a moment and try again.');
-      throw new Error('API error: ' + msg);
-    }
-
-    const data = await res.json();
-    const rawText = data?.content?.[0]?.text || '';
-    if (!rawText) throw new Error('Empty response from AI. Please try again.');
-
-    // Robust JSON extraction
-    let parsed;
-    try {
-      const clean = rawText.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
-      // Try direct parse first
-      parsed = JSON.parse(clean);
-    } catch(e1) {
-      // Try extracting JSON block
-      const match = rawText.match(/\{[\s\S]*\}/);
-      if (match) {
-        try { parsed = JSON.parse(match[0]); }
-        catch(e2) { throw new Error('Could not parse AI response. The transcript may be too short — try adding more detail.'); }
-      } else {
-        throw new Error('Unexpected AI response format. Please try again.');
-      }
-    }
-
-    // Validate structure
-    if (!parsed.soap || !parsed.prescription) throw new Error('Incomplete AI response. Please try again with a more detailed transcript.');
-    if (!parsed.prescription.medicines || !Array.isArray(parsed.prescription.medicines) || parsed.prescription.medicines.length === 0) {
-      parsed.prescription.medicines = [{name:'As per doctor advice', dose:'—', route:'Oral', frequency:'As directed', duration:'As directed', instruction:'As prescribed'}];
-    }
-
-    renderSOAP(parsed.soap, pName, pAge, pGender, dName, cName, date, spec);
-    renderRx(parsed.prescription, pName, pAge, pGender, dName, cName, date);
-    renderSummary(parsed.summary || '', pName, dName, date);
-    document.getElementById('rawOut').textContent = tx;
-
-    document.getElementById('loadCard').style.display = 'none';
-    document.getElementById('outCard').style.display = 'block';
-    document.getElementById('genTime').textContent = `Generated ${new Date().toLocaleTimeString('en-IN')}`;
-    document.getElementById('genBtn').disabled = false;
-    switchTab('soap');
-    document.getElementById('outCard').scrollIntoView({behavior:'smooth', block:'start'});
-
-  } catch(err) {
-    clearInterval(spinInt);
-    document.getElementById('loadCard').style.display = 'none';
-    document.getElementById('genBtn').disabled = false;
-    showInline('❌ ' + (err.message || 'Something went wrong. Please try again.'), 'err');
-  }
-}
-
-// ── Render SOAP ────────────────────────────────────────────────
-function renderSOAP(s, name, age, gender, doc, clinic, date, spec) {
-  const sections = [
-    ['S — Subjective (Patient History)', s.subjective],
-    ['O — Objective (Examination Findings)', s.objective],
-    ['A — Assessment (Diagnosis)', s.assessment],
-    ['P — Plan (Treatment & Follow-up)', s.plan]
-  ];
-  let html = `<div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #e2e8f0">
-    <div style="font-weight:700">${esc(name)}</div>
-    <div style="font-size:.8rem;color:#64748b">${esc(age)} yrs | ${esc(gender)} | ${esc(spec)} | ${date}</div>
-    <div style="font-size:.8rem;color:#64748b">${esc(doc)} — ${esc(clinic)}</div>
-  </div>`;
-  storeSOAP = `SOAP NOTE\n${'='.repeat(50)}\nPatient: ${name} | Age: ${age} | Gender: ${gender}\nDoctor: ${doc} | ${clinic}\nSpecialty: ${spec} | Date: ${date}\n\n`;
-  for (const [lbl, val] of sections) {
-    html += `<div class="soap-sec"><div class="soap-lbl">${lbl}</div><div class="soap-val">${esc(val||'Not documented')}</div></div>`;
-    storeSOAP += `${lbl}\n${val||'Not documented'}\n\n`;
-  }
-  document.getElementById('soapOut').innerHTML = html;
-}
-
-// ── Render Rx ──────────────────────────────────────────────────
-function renderRx(rx, name, age, gender, doc, clinic, date) {
-  const meds = (rx.medicines||[]).map(m => `
-    <div class="med">
-      <div class="med-name">💊 ${esc(m.name)} — ${esc(m.dose)}</div>
-      <div class="med-det">🔹 ${esc(m.route)} | ${esc(m.frequency)} | Duration: ${esc(m.duration)}</div>
-      ${m.instruction ? `<div class="med-inst">📌 ${esc(m.instruction)}</div>` : ''}
-    </div>`).join('');
-
-  document.getElementById('rxOut').innerHTML = `
-    <div class="rx-top">
-      <div class="rx-logo">℞ Prescription<small>Reviewed & Approved by Doctor</small></div>
-      <div class="rx-dr"><strong>${esc(doc)}</strong><br>${esc(clinic)}<br>${date}</div>
-    </div>
-    <div class="rx-pt">
-      <strong>Patient:</strong> ${esc(name)} &nbsp;|&nbsp;
-      <strong>Age:</strong> ${esc(age)} yrs &nbsp;|&nbsp;
-      <strong>Gender:</strong> ${esc(gender)}<br>
-      <strong>Diagnosis:</strong> ${esc(rx.diagnosis||'—')}
-    </div>
-    ${meds}
-    ${rx.investigations && rx.investigations!=='None at this time'
-      ? `<div class="info-box info-inv"><strong>🔬 Investigations:</strong> ${esc(rx.investigations)}</div>` : ''}
-    <div class="info-box info-adv"><strong>💬 Advice:</strong> ${esc(rx.advice||'—')}</div>
-    <div style="font-size:.84rem;margin-top:8px;color:#374151"><strong>🗓 Follow-up:</strong> ${esc(rx.followUp||'—')}</div>
-    <div class="rx-foot">Prescription generated by MedScribe AI and reviewed by ${esc(doc)}. Valid for this consultation only. Date: ${date}</div>`;
-
-  storeRx = `PRESCRIPTION\n${'='.repeat(50)}\nPatient: ${name} | Age: ${age} | ${date}\nDoctor: ${doc} | ${clinic}\nDiagnosis: ${rx.diagnosis||''}\n\nMEDICINES:\n` +
-    (rx.medicines||[]).map(m=>`• ${m.name} ${m.dose} | ${m.route} | ${m.frequency} | ${m.duration}\n  ${m.instruction||''}`).join('\n') +
-    `\n\nInvestigations: ${rx.investigations||'None'}\nAdvice: ${rx.advice||''}\nFollow-up: ${rx.followUp||''}`;
-}
-
-// ── Render Summary ─────────────────────────────────────────────
-function renderSummary(sum, name, doc, date) {
-  storeSum = sum;
-  document.getElementById('sumOut').innerHTML = `
-    <div style="background:#f8fafc;border-radius:8px;padding:14px;font-size:.9rem;line-height:1.7;border-left:3px solid #10b981">
-      ${esc(sum||'Summary not available.')}
-    </div>
-    <div style="font-size:.78rem;color:#94a3b8;margin-top:8px">Auto-generated summary for patient records. Review before use.</div>`;
-}
-
-// ── UI Helpers ─────────────────────────────────────────────────
-function switchTab(n) {
-  const names = ['soap','rx','sum','raw'];
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', names[i]===n));
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  document.getElementById('tab-'+n).classList.add('active');
-}
-
-function showInline(msg, type) {
-  document.getElementById('inlineAlert').innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
-  setTimeout(() => { document.getElementById('inlineAlert').innerHTML = ''; }, 6000);
-}
-
-function doCopy(w) {
-  const t = w==='soap' ? storeSOAP : w==='rx' ? storeRx : storeSum;
-  navigator.clipboard.writeText(t).then(() => showInline('✅ Copied to clipboard!', 'ok'));
-}
-
-function doWhatsApp() {
-  const msg = encodeURIComponent(`*Prescription*\n\n${storeRx}\n\n_Verified by doctor. Contact clinic for queries._`);
-  window.open(`https://wa.me/?text=${msg}`, '_blank');
-}
-
-function doPrint(w) {
-  const content = w==='soap'
-    ? document.getElementById('soapOut').innerHTML
-    : document.getElementById('rxOut').innerHTML;
-  const pw = window.open('','_blank');
-  pw.document.write(`<html><head><title>MedScribe AI</title>
-  <style>
-    body{font-family:'Segoe UI',sans-serif;padding:28px;max-width:720px;margin:0 auto;color:#1a202c}
-    .soap-lbl{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#1a56db;margin-bottom:5px;margin-top:14px}
-    .soap-val{background:#f8fafc;border-radius:6px;padding:9px 12px;font-size:.875rem;line-height:1.65;border-left:3px solid #1a56db;white-space:pre-wrap}
-    .soap-sec{margin-bottom:14px}
-    .med{border:1px solid #e2e8f0;border-radius:6px;padding:9px 12px;margin-bottom:8px;border-left:3px solid #10b981}
-    .med-name{font-weight:700;font-size:.9rem}.med-det{font-size:.78rem;color:#64748b;margin-top:2px}.med-inst{font-size:.78rem;font-style:italic;margin-top:3px}
-    .rx-top{display:flex;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #e2e8f0}
-    .rx-logo{font-size:1.1rem;font-weight:800;color:#1a56db}.rx-dr{text-align:right;font-size:.78rem;color:#64748b}
-    .rx-pt{background:#f8fafc;border-radius:6px;padding:9px 12px;margin-bottom:12px;font-size:.82rem}
-    .info-box{border-radius:6px;padding:8px 12px;margin-top:8px;font-size:.82rem}
-    .info-inv{background:#fff7ed;border:1px solid #fed7aa}.info-adv{background:#f0fdf4;border:1px solid #bbf7d0}
-    .rx-foot{margin-top:12px;padding-top:10px;border-top:1px dashed #e2e8f0;font-size:.72rem;color:#94a3b8}
-    @media print{@page{margin:16mm}button{display:none!important}}
-  </style></head><body>
-  ${content}
-  <p style="font-size:.7rem;color:#94a3b8;margin-top:20px">Generated by MedScribe AI | ${new Date().toLocaleString('en-IN')} | Doctor reviewed</p>
-  <script>window.onload=()=>{window.print()}<\/script></body></html>`);
-  pw.document.close();
-}
-
-function clearAll() {
-  document.getElementById('txInput').value = '';
-  document.getElementById('outCard').style.display = 'none';
-  document.getElementById('loadCard').style.display = 'none';
-  document.getElementById('inlineAlert').innerHTML = '';
-  storeSOAP = storeRx = storeSum = '';
-  setBtn('idle','🎤','Click mic to record consultation');
-  document.getElementById('recTimer').textContent = '';
-}
-
-function esc(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
-}
-</script>
-</body>
-</html>
+                // Get the text from Gemini
+                let rawText = data.candidates[0].content.parts[0].text;
+                
+                // BULLETPROOF JSON EXTRACTOR
+                // This finds the first { and the last } and ignores everything else.
+                const startIndex = rawText.indexOf('{');
+                const endIndex = rawText.lastIndexOf('}');
+                
+                if (startIndex === -1 || endIndex === -1) {
+                    throw new Error("AI did not return a valid JSON structure. Please try again.");
+                }
+                
+                let cleanJsonString = rawText.substring(startIndex, endIndex + 1);
+                const result = JSON.parse(cleanJsonString);
+                
+                renderOutput(result);
