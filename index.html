@@ -13,122 +13,177 @@
                 extend: {
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
-                        primary: '#1e3a8a',
-                        secondary: '#4f46e5',
+                        brand: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6', // Teal primary
+                            600: '#0d9488',
+                            900: '#134e4a',
+                        },
                         surface: '#ffffff',
                         background: '#f8fafc',
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 15px rgba(20, 184, 166, 0.5)',
                     }
                 }
             }
         }
     </script>
     <style>
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         textarea { resize: none; }
     </style>
 </head>
-<body class="bg-background font-sans text-slate-800 antialiased min-h-screen flex flex-col print:bg-white">
+<body class="bg-background font-sans text-slate-800 antialiased h-screen flex overflow-hidden print:bg-white print:h-auto">
 
-    <nav class="bg-surface border-b border-slate-200 sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-sm print:hidden">
-        <div class="flex items-center gap-3">
-            <div class="bg-blue-50 p-2 rounded-lg text-secondary">
-                <i class="fa-solid fa-stethoscope text-xl"></i>
+    <aside class="w-72 bg-white border-r border-slate-200 flex flex-col flex-shrink-0 transition-all shadow-soft z-10 print:hidden">
+        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-brand-50 p-2 rounded-xl text-brand-600 shadow-sm">
+                    <i class="fa-solid fa-stethoscope text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-slate-900 leading-tight">MedScribe</h1>
+                    <span class="text-[10px] font-bold tracking-widest text-brand-500 uppercase">EMR System</span>
+                </div>
             </div>
-            <h1 class="text-xl font-bold tracking-tight text-slate-900">MedScribe <span class="text-xs font-medium bg-indigo-100 text-secondary px-2 py-0.5 rounded-full ml-2">PROTOTYPE</span></h1>
         </div>
         
-        <div class="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-full px-4 py-1.5 focus-within:border-secondary focus-within:ring-2 focus-within:ring-indigo-100 transition-all shadow-inner">
-            <i class="fa-solid fa-key text-slate-400 text-sm"></i>
-            <input type="password" id="api-key" placeholder="Paste Gemini API Key" class="bg-transparent text-sm text-slate-700 outline-none w-56 placeholder-slate-400">
+        <div class="p-4">
+            <button onclick="startNewSession()" class="w-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium py-2.5 rounded-lg shadow-md transition-colors flex items-center justify-center gap-2">
+                <i class="fa-solid fa-plus"></i> New Patient Record
+            </button>
         </div>
-    </nav>
 
-    <main class="container mx-auto p-6 max-w-6xl flex-grow flex flex-col justify-center print:p-0 print:m-0 print:block">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 print:block">
-            
-            <div class="flex flex-col gap-4 print:hidden">
-                <div class="flex justify-between items-end">
-                    <div>
-                        <h2 class="text-lg font-semibold text-slate-800">Clinical Dictation</h2>
-                        <p class="text-sm text-slate-500 mt-1">Speak naturally. The AI will structure your notes.</p>
-                    </div>
-                    <select id="language-select" class="text-sm bg-white border border-slate-200 text-slate-600 rounded-lg px-3 py-1.5 outline-none focus:border-secondary shadow-sm">
-                        <option value="en-IN">English / Hinglish</option>
-                        <option value="hi-IN">Hindi</option>
-                    </select>
-                </div>
-                
-                <div class="relative bg-white border border-slate-200 rounded-2xl shadow-sm focus-within:border-secondary focus-within:ring-4 focus-within:ring-indigo-50 transition-all flex flex-col h-80">
-                    <textarea id="transcript-output" class="w-full flex-grow p-5 text-slate-700 bg-transparent outline-none rounded-t-2xl leading-relaxed" placeholder="Doctor, begin dictation here..."></textarea>
-                    
-                    <div class="bg-slate-50 border-t border-slate-100 p-3 rounded-b-2xl flex justify-between items-center">
-                        <div class="flex items-center gap-3">
-                            <button id="record-btn" class="w-12 h-12 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-secondary hover:border-secondary hover:shadow-md transition-all flex items-center justify-center group" title="Toggle Microphone">
-                                <i id="mic-icon" class="fa-solid fa-microphone text-lg group-hover:scale-110 transition-transform"></i>
-                            </button>
-                            <span id="mic-text" class="text-sm font-medium text-slate-500">Ready to record</span>
-                        </div>
-                        <button onclick="generateWithGemini()" id="gen-btn" class="bg-primary hover:bg-blue-900 text-white text-sm font-semibold px-6 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2">
-                            <span id="btn-text">Generate Notes</span>
-                            <i id="btn-spinner" class="fa-solid fa-circle-notch fa-spin hidden"></i>
-                            <i id="btn-icon" class="fa-solid fa-wand-magic-sparkles"></i>
-                        </button>
-                    </div>
-                </div>
+        <div class="flex-grow overflow-y-auto p-4 pt-0 space-y-2" id="history-list">
+            <div class="text-center text-xs text-slate-400 mt-10">No records found. <br>Generate a note to save it.</div>
+        </div>
+    </aside>
 
-                <div id="error-box" class="hidden p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded-r-lg shadow-sm"></div>
+    <div class="flex-1 flex flex-col h-screen overflow-hidden print:h-auto print:block">
+        
+        <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 px-8 py-4 flex justify-between items-center z-10 print:hidden">
+            <h2 class="text-lg font-semibold text-slate-700">Clinical Dashboard</h2>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-full px-4 py-1.5 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-100 transition-all">
+                    <i class="fa-solid fa-key text-slate-400 text-sm"></i>
+                    <input type="password" id="api-key" placeholder="Paste Gemini API Key" class="bg-transparent text-sm text-slate-700 outline-none w-48 placeholder-slate-400">
+                </div>
+                <div class="w-8 h-8 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-bold text-sm shadow-inner cursor-pointer">
+                    DR
+                </div>
             </div>
+        </header>
 
-            <div class="bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/40 flex flex-col overflow-hidden h-full min-h-[500px] print:w-full print:border-none print:shadow-none print:min-h-0 print:block">
-                <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex justify-between items-center print:bg-white print:border-b-2 print:border-slate-800">
-                    <h2 class="text-lg font-semibold text-slate-800">Structured Medical Record</h2>
-                    
-                    <div class="flex items-center gap-4">
-                        <span id="ai-badge" class="text-xs font-semibold text-slate-400 uppercase tracking-wider print:hidden">AI Generated</span>
-                        <div id="action-buttons" class="hidden flex items-center gap-3 print:hidden">
-                            <button onclick="window.print()" class="text-slate-500 hover:text-secondary transition-colors" title="Print Prescription">
-                                <i class="fa-solid fa-print text-lg"></i>
-                            </button>
-                            <div class="w-px h-4 bg-slate-300"></div>
-                            <button onclick="clearData()" class="text-slate-500 hover:text-red-500 transition-colors" title="Clear All Data">
-                                <i class="fa-solid fa-trash-can text-lg"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+        <main class="flex-1 overflow-y-auto p-8 print:p-0 print:m-0 print:block">
+            <div class="max-w-7xl mx-auto grid grid-cols-1 xl:grid-cols-12 gap-8 print:block">
                 
-                <div class="p-6 flex-grow overflow-y-auto print:overflow-visible print:p-0 print:pt-6">
-                    <div id="status-msg" class="h-full flex flex-col items-center justify-center text-slate-400 space-y-4 print:hidden">
-                        <i class="fa-solid fa-file-medical text-4xl text-slate-200"></i>
-                        <p class="text-sm">Your structured SOAP note and prescription will appear here.</p>
-                    </div>
-
-                    <div id="output-area" class="space-y-8 hidden animate-fade-in print:block">
-                        <div>
-                            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2 print:text-slate-800"><i class="fa-solid fa-clipboard-user text-secondary print:text-slate-800"></i> Clinical Assessment (SOAP)</h3>
-                            <div class="bg-slate-50 rounded-xl border border-slate-100 p-5 space-y-4 print:bg-white print:border-slate-300">
-                                <div><span class="font-bold text-slate-800 w-6 inline-block">S:</span> <span class="text-slate-600 text-sm print:text-black" id="soap-s"></span></div>
-                                <div class="w-full h-px bg-slate-200 print:bg-slate-300"></div>
-                                <div><span class="font-bold text-slate-800 w-6 inline-block">O:</span> <span class="text-slate-600 text-sm print:text-black" id="soap-o"></span></div>
-                                <div class="w-full h-px bg-slate-200 print:bg-slate-300"></div>
-                                <div><span class="font-bold text-slate-800 w-6 inline-block">A:</span> <span class="text-slate-600 text-sm print:text-black" id="soap-a"></span></div>
-                                <div class="w-full h-px bg-slate-200 print:bg-slate-300"></div>
-                                <div><span class="font-bold text-slate-800 w-6 inline-block">P:</span> <span class="text-slate-600 text-sm print:text-black" id="soap-p"></span></div>
+                <div class="xl:col-span-5 flex flex-col gap-5 print:hidden">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-soft">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-semibold text-slate-800 flex items-center gap-2">
+                                <i class="fa-regular fa-user text-brand-500"></i> Patient Context
+                            </h3>
+                            <select id="language-select" class="text-xs bg-slate-50 border border-slate-200 text-slate-600 rounded-md px-2 py-1 outline-none focus:border-brand-500 cursor-pointer">
+                                <option value="en-IN">English/Hinglish</option>
+                                <option value="hi-IN">Hindi</option>
+                            </select>
+                        </div>
+                        <input type="text" id="patient-name" placeholder="Patient Name or ID (Optional)" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-brand-500 focus:bg-white transition-colors mb-4">
+                        
+                        <div class="relative flex flex-col h-64 border border-slate-200 rounded-xl overflow-hidden focus-within:border-brand-500 transition-colors bg-slate-50 focus-within:bg-white">
+                            <textarea id="transcript-output" class="w-full flex-grow p-4 text-slate-700 bg-transparent outline-none text-sm leading-relaxed" placeholder="Doctor, begin dictation here..."></textarea>
+                            <div class="bg-white border-t border-slate-100 p-3 flex justify-between items-center">
+                                <div class="flex items-center gap-3">
+                                    <button id="record-btn" class="w-10 h-10 rounded-full bg-slate-100 text-slate-600 hover:text-brand-600 hover:bg-brand-50 transition-all flex items-center justify-center group relative" title="Toggle Microphone">
+                                        <i id="mic-icon" class="fa-solid fa-microphone group-hover:scale-110 transition-transform z-10"></i>
+                                        <div id="mic-pulse" class="absolute inset-0 rounded-full bg-red-400 opacity-0 hidden"></div>
+                                    </button>
+                                    <span id="mic-text" class="text-xs font-medium text-slate-500">Ready</span>
+                                </div>
+                                <button onclick="generateWithGemini()" id="gen-btn" class="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-5 py-2 rounded-lg shadow-md shadow-brand-500/30 transition-all flex items-center gap-2">
+                                    <span id="btn-text">Generate</span>
+                                    <i id="btn-spinner" class="fa-solid fa-circle-notch fa-spin hidden"></i>
+                                    <i id="btn-icon" class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+                                </button>
                             </div>
                         </div>
+                    </div>
+                    <div id="error-box" class="hidden p-4 bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl shadow-sm"></div>
+                </div>
 
-                        <div>
-                            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2 print:text-slate-800"><i class="fa-solid fa-pills text-secondary print:text-slate-800"></i> Prescription (Rx)</h3>
-                            <div id="rx-list" class="space-y-3"></div>
+                <div class="xl:col-span-7 print:w-full print:block">
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-soft h-full min-h-[600px] flex flex-col print:border-none print:shadow-none print:min-h-0">
+                        
+                        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 rounded-t-2xl print:bg-white print:border-b-2 print:border-slate-800 print:rounded-none">
+                            <div>
+                                <h2 class="text-lg font-bold text-slate-800">Medical Record</h2>
+                                <p id="record-meta" class="text-xs text-slate-400 mt-0.5 print:text-black">Unsaved Session</p>
+                            </div>
+                            
+                            <div class="flex items-center gap-3">
+                                <span id="ai-badge" class="bg-indigo-50 text-indigo-600 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wide print:hidden">AI Draft</span>
+                                <div id="action-buttons" class="hidden flex items-center gap-2 print:hidden">
+                                    <button onclick="window.print()" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors" title="Print Record">
+                                        <i class="fa-solid fa-print"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="p-8 flex-grow overflow-y-auto print:p-0 print:pt-6 relative">
+                            <div id="status-msg" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 print:hidden">
+                                <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100">
+                                    <i class="fa-regular fa-file-lines text-2xl text-slate-300"></i>
+                                </div>
+                                <p class="text-sm">Structured data will appear here.</p>
+                            </div>
+
+                            <div id="output-area" class="space-y-8 hidden print:block">
+                                <div>
+                                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2 print:text-slate-800 border-b border-slate-100 pb-2 print:border-slate-800">
+                                        <i class="fa-solid fa-stethoscope text-brand-500 print:text-slate-800"></i> Clinical Assessment
+                                    </h3>
+                                    <div class="space-y-3">
+                                        <div class="flex gap-4"><div class="font-bold text-slate-800 w-4">S</div><div class="text-slate-700 text-sm print:text-black" id="soap-s"></div></div>
+                                        <div class="flex gap-4"><div class="font-bold text-slate-800 w-4">O</div><div class="text-slate-700 text-sm print:text-black" id="soap-o"></div></div>
+                                        <div class="flex gap-4"><div class="font-bold text-slate-800 w-4">A</div><div class="text-slate-700 text-sm print:text-black" id="soap-a"></div></div>
+                                        <div class="flex gap-4"><div class="font-bold text-slate-800 w-4">P</div><div class="text-slate-700 text-sm print:text-black" id="soap-p"></div></div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2 print:text-slate-800 border-b border-slate-100 pb-2 print:border-slate-800">
+                                        <i class="fa-solid fa-pills text-brand-500 print:text-slate-800"></i> Rx
+                                    </h3>
+                                    <div id="rx-list" class="space-y-0 border border-slate-200 rounded-xl overflow-hidden print:border-none print:rounded-none">
+                                        </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
+        </main>
+    </div>
 
     <script>
+        // --- STATE MANAGEMENT ---
+        let currentRecordId = null;
+        let emrHistory = JSON.parse(localStorage.getItem('medscribe_history')) || [];
+
+        // Initialize App
+        window.onload = () => {
+            renderHistoryList();
+        };
+
         // --- 1. BROWSER SPEECH TO TEXT ---
         let recognition;
         let isRecording = false;
@@ -137,6 +192,7 @@
         const recordBtn = document.getElementById('record-btn');
         const micIcon = document.getElementById('mic-icon');
         const micText = document.getElementById('mic-text');
+        const micPulse = document.getElementById('mic-pulse');
         const transcriptOutput = document.getElementById('transcript-output');
         const langSelect = document.getElementById('language-select');
 
@@ -147,8 +203,9 @@
 
             recognition.onstart = function() {
                 isRecording = true;
-                recordBtn.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
-                recordBtn.classList.add('bg-red-50', 'text-red-500', 'border-red-200', 'animate-pulse');
+                micIcon.classList.replace('text-slate-600', 'text-red-500');
+                micPulse.classList.remove('hidden');
+                micPulse.classList.add('animate-ping');
                 micText.innerText = "Listening...";
                 micText.classList.add('text-red-500');
             };
@@ -167,23 +224,21 @@
 
             recognition.onerror = function(event) {
                 console.error("Speech recognition error", event.error);
-                if(event.error === 'not-allowed') alert("Please allow microphone permissions in the browser URL bar.");
+                if(event.error === 'not-allowed') alert("Please allow microphone permissions.");
             };
 
             recognition.onend = function() {
                 isRecording = false;
-                recordBtn.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
-                recordBtn.classList.remove('bg-red-50', 'text-red-500', 'border-red-200', 'animate-pulse');
-                micText.innerText = "Ready to record";
+                micIcon.classList.replace('text-red-500', 'text-slate-600');
+                micPulse.classList.add('hidden');
+                micPulse.classList.remove('animate-ping');
+                micText.innerText = "Ready";
                 micText.classList.remove('text-red-500');
             };
-        } else {
-            micText.innerText = "Mic not supported on this browser";
-            recordBtn.disabled = true;
-            recordBtn.classList.add('opacity-50', 'cursor-not-allowed');
         }
 
         recordBtn.onclick = () => {
+            if (!recognition) return alert("Mic not supported on this browser");
             if (!isRecording) {
                 recognition.lang = langSelect.value;
                 recognition.start();
@@ -192,22 +247,98 @@
             }
         };
 
-        // --- 2. CLEAR DATA FUNCTION ---
-        function clearData() {
-            // 1. Clear the text area and memory
-            transcriptOutput.value = '';
+        // --- 2. EMR HISTORY LOGIC ---
+        function saveRecordToHistory(parsedData) {
+            const patientNameInput = document.getElementById('patient-name').value.trim();
+            const patientName = patientNameInput || "Unknown Patient";
+            const dateStr = new Date().toLocaleString();
+            
+            const newRecord = {
+                id: Date.now().toString(),
+                date: dateStr,
+                patientName: patientName,
+                transcript: transcriptOutput.value,
+                data: parsedData
+            };
+
+            emrHistory.unshift(newRecord); // Add to beginning
+            localStorage.setItem('medscribe_history', JSON.stringify(emrHistory));
+            currentRecordId = newRecord.id;
+            
+            renderHistoryList();
+            updateRecordMeta(newRecord);
+        }
+
+        function renderHistoryList() {
+            const listContainer = document.getElementById('history-list');
+            listContainer.innerHTML = '';
+
+            if(emrHistory.length === 0) {
+                listContainer.innerHTML = '<div class="text-center text-xs text-slate-400 mt-10">No records found. <br>Generate a note to save it.</div>';
+                return;
+            }
+
+            emrHistory.forEach(record => {
+                const isActive = record.id === currentRecordId;
+                const activeClasses = isActive ? 'bg-brand-50 border-brand-200' : 'bg-white border-slate-100 hover:border-slate-300 hover:bg-slate-50';
+                
+                const html = `
+                    <div onclick="loadRecord('${record.id}')" class="cursor-pointer border rounded-xl p-3 transition-colors ${activeClasses}">
+                        <div class="flex justify-between items-start mb-1">
+                            <h4 class="font-semibold text-sm text-slate-800 truncate pr-2"><i class="fa-regular fa-user text-slate-400 text-xs mr-1"></i> ${record.patientName}</h4>
+                            <button onclick="deleteRecord('${record.id}', event)" class="text-slate-300 hover:text-red-500 transition-colors"><i class="fa-solid fa-xmark text-xs"></i></button>
+                        </div>
+                        <p class="text-[10px] text-slate-500"><i class="fa-regular fa-clock mr-1"></i> ${record.date}</p>
+                    </div>
+                `;
+                listContainer.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        function loadRecord(id) {
+            const record = emrHistory.find(r => r.id === id);
+            if(!record) return;
+
+            currentRecordId = id;
+            document.getElementById('patient-name').value = record.patientName === "Unknown Patient" ? "" : record.patientName;
+            document.getElementById('transcript-output').value = record.transcript;
+            finalTranscript = record.transcript;
+
+            renderHistoryList(); // Update active state
+            updateRecordMeta(record);
+            renderOutputUI(record.data);
+        }
+
+        function deleteRecord(id, event) {
+            event.stopPropagation(); // Prevent triggering loadRecord
+            if(!confirm("Delete this patient record?")) return;
+            
+            emrHistory = emrHistory.filter(r => r.id !== id);
+            localStorage.setItem('medscribe_history', JSON.stringify(emrHistory));
+            
+            if(currentRecordId === id) {
+                startNewSession();
+            } else {
+                renderHistoryList();
+            }
+        }
+
+        function startNewSession() {
+            currentRecordId = null;
+            document.getElementById('patient-name').value = '';
+            document.getElementById('transcript-output').value = '';
             finalTranscript = '';
             
-            // 2. Hide output and show placeholder
             document.getElementById('output-area').classList.add('hidden');
             document.getElementById('status-msg').classList.remove('hidden');
-            
-            // 3. Hide action buttons
             document.getElementById('action-buttons').classList.add('hidden');
-            document.getElementById('ai-badge').classList.remove('hidden');
+            document.getElementById('record-meta').innerText = "Unsaved Session";
+            
+            renderHistoryList(); // Clear active state
+        }
 
-            // 4. Hide error box if present
-            document.getElementById('error-box').classList.add('hidden');
+        function updateRecordMeta(record) {
+            document.getElementById('record-meta').innerHTML = `Patient: <b>${record.patientName}</b> &nbsp;&bull;&nbsp; ${record.date}`;
         }
 
         // --- 3. GEMINI AI GENERATION ---
@@ -219,40 +350,34 @@
             const transcript = transcriptOutput.value.trim();
             
             if(!apiKey) {
-                errorBox.innerText = "Authentication required: Please paste your Gemini API Key in the top right.";
+                errorBox.innerText = "Authentication required: Paste your Gemini API Key top right.";
                 errorBox.classList.remove('hidden');
                 return;
             }
             if(!transcript) {
-                errorBox.innerText = "Empty input: Please record or type a clinical dictation first.";
+                errorBox.innerText = "Empty input: Record or type clinical dictation first.";
                 errorBox.classList.remove('hidden');
                 return;
             }
 
-            document.getElementById('btn-text').innerText = "Analyzing...";
+            // UI Loading state
+            document.getElementById('btn-text').innerText = "Processing";
             document.getElementById('btn-spinner').classList.remove('hidden');
             document.getElementById('btn-icon').classList.add('hidden');
             document.getElementById('gen-btn').disabled = true;
             document.getElementById('gen-btn').classList.add('opacity-80', 'cursor-not-allowed');
             
-            const systemPrompt = `You are an expert Indian Clinical Scribe. Read the transcript (which may be in English, Hindi, or Hinglish). 
-            Extract the medical data and return ONLY RAW JSON.
+            const systemPrompt = `You are an expert Indian Clinical Scribe. Read the transcript. 
+            Extract data and return ONLY RAW JSON.
             Rules:
-            1. Use standard Indian brand names (e.g., Dolo 650, Augmentin 625, Pan D) based on symptoms.
+            1. Use standard Indian brand names (e.g., Dolo 650).
             2. Use standard Indian dosing formats (e.g., 1-0-1, SOS).
-            3. Infer durations (e.g., 3 days) if implied.
+            3. Infer durations.
             
-            DO NOT output any markdown. DO NOT output conversational text. Output ONLY this exact JSON structure:
+            DO NOT output markdown. Output ONLY this exact JSON:
             {
-                "soap": {
-                    "subjective": "...",
-                    "objective": "...",
-                    "assessment": "...",
-                    "plan": "..."
-                },
-                "prescription": [
-                    { "medicine": "...", "dosage": "...", "duration": "...", "instructions": "..." }
-                ]
+                "soap": { "subjective": "...", "objective": "...", "assessment": "...", "plan": "..." },
+                "prescription": [ { "medicine": "...", "dosage": "...", "duration": "...", "instructions": "..." } ]
             }`;
 
             try {
@@ -260,39 +385,32 @@
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        contents: [{
-                            parts: [{ text: systemPrompt + "\n\nTranscript:\n" + transcript }]
-                        }],
+                        contents: [{ parts: [{ text: systemPrompt + "\n\nTranscript:\n" + transcript }] }],
                         generationConfig: { temperature: 0.1 }
                     })
                 });
 
                 const data = await response.json();
-                
-                if(data.error) {
-                    throw new Error(`Google API Error: ${data.error.message}`);
-                }
+                if(data.error) throw new Error(data.error.message);
 
                 let rawText = data.candidates[0].content.parts[0].text;
-                
                 const startIndex = rawText.indexOf('{');
                 const endIndex = rawText.lastIndexOf('}');
                 
-                if (startIndex === -1 || endIndex === -1) {
-                    throw new Error("Data parsing failed. AI did not return a valid structure.");
-                }
+                if (startIndex === -1 || endIndex === -1) throw new Error("Data parsing failed.");
                 
                 let cleanJsonString = rawText.substring(startIndex, endIndex + 1);
                 const result = JSON.parse(cleanJsonString);
                 
-                renderOutput(result);
+                // SAVE TO EMR AND RENDER
+                saveRecordToHistory(result);
+                renderOutputUI(result);
 
             } catch (error) {
-                console.error("Full Error Details:", error);
                 errorBox.innerText = error.message;
                 errorBox.classList.remove('hidden');
             } finally {
-                document.getElementById('btn-text').innerText = "Generate Notes";
+                document.getElementById('btn-text').innerText = "Generate";
                 document.getElementById('btn-spinner').classList.add('hidden');
                 document.getElementById('btn-icon').classList.remove('hidden');
                 document.getElementById('gen-btn').disabled = false;
@@ -300,8 +418,8 @@
             }
         }
 
-        // --- 4. RENDER OUTPUT ---
-        function renderOutput(data) {
+        // --- 4. RENDER OUTPUT UI ---
+        function renderOutputUI(data) {
             document.getElementById('status-msg').classList.add('hidden');
             const outputArea = document.getElementById('output-area');
             
@@ -310,40 +428,36 @@
             outputArea.classList.add('animate-fade-in');
             outputArea.classList.remove('hidden');
 
-            // Show Print/Clear actions, hide "AI Generated" badge to save space
             document.getElementById('action-buttons').classList.remove('hidden');
-            document.getElementById('ai-badge').classList.add('hidden');
 
-            document.getElementById('soap-s').innerText = data.soap?.subjective || "Not specified";
-            document.getElementById('soap-o').innerText = data.soap?.objective || "Not specified";
-            document.getElementById('soap-a').innerText = data.soap?.assessment || "Not specified";
-            document.getElementById('soap-p').innerText = data.soap?.plan || "Not specified";
+            // Populate SOAP
+            document.getElementById('soap-s').innerText = data.soap?.subjective || "N/A";
+            document.getElementById('soap-o').innerText = data.soap?.objective || "N/A";
+            document.getElementById('soap-a').innerText = data.soap?.assessment || "N/A";
+            document.getElementById('soap-p').innerText = data.soap?.plan || "N/A";
 
+            // Populate Rx
             const rxList = document.getElementById('rx-list');
             rxList.innerHTML = ""; 
             
             if(data.prescription && Array.isArray(data.prescription) && data.prescription.length > 0) {
                 data.prescription.forEach((med, index) => {
                     rxList.innerHTML += `
-                        <div class="bg-white border border-slate-200 p-4 rounded-xl flex justify-between items-center shadow-sm print:shadow-none print:border-b print:rounded-none print:p-2">
-                            <div class="flex items-start gap-4">
-                                <div class="bg-indigo-50 text-secondary font-bold w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0 print:border print:border-slate-800 print:bg-white print:text-black">
-                                    ${index + 1}
+                        <div class="p-4 bg-white border-b border-slate-100 last:border-0 flex items-start gap-4 print:p-2 print:border-b print:border-slate-300">
+                            <div class="font-bold text-slate-300 text-lg w-6 print:text-slate-800">${index + 1}.</div>
+                            <div>
+                                <h4 class="font-bold text-slate-800">${med.medicine}</h4>
+                                <div class="text-sm text-slate-600 mt-1 flex gap-4 print:text-black">
+                                    <span><i class="fa-solid fa-cubes-stacked text-slate-300 mr-1 text-xs print:hidden"></i> ${med.dosage}</span>
+                                    <span><i class="fa-regular fa-calendar text-slate-300 mr-1 text-xs print:hidden"></i> ${med.duration}</span>
                                 </div>
-                                <div>
-                                    <h4 class="font-bold text-slate-800 text-base">${med.medicine || "Unknown"}</h4>
-                                    <p class="text-sm text-slate-500 mt-0.5 print:text-black"><i class="fa-regular fa-clock mr-1 text-slate-400 print:hidden"></i> ${med.dosage || "-"} &nbsp;&bull;&nbsp; ${med.duration || "-"}</p>
-                                    <p class="text-xs text-slate-400 mt-1 italic print:text-black">${med.instructions || "Use as directed"}</p>
-                                </div>
+                                <p class="text-xs text-brand-600 mt-1.5 italic print:text-slate-600">${med.instructions}</p>
                             </div>
                         </div>
                     `;
                 });
             } else {
-                rxList.innerHTML = `
-                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-100 text-center text-slate-500 text-sm print:border-none print:bg-transparent">
-                        No medications prescribed in this session.
-                    </div>`;
+                rxList.innerHTML = `<div class="p-4 text-slate-500 text-sm italic">No medications prescribed.</div>`;
             }
         }
     </script>
