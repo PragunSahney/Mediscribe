@@ -14,7 +14,8 @@
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
                         brand: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 900: '#312e81' },
-                        surface: '#ffffff', background: '#f8fafc', dark: '#0f172a'
+                        surface: '#ffffff', background: '#f8fafc', dark: '#0f172a',
+                        whatsapp: { 50: '#f0fdf4', 500: '#22c55e', 600: '#16a34a' }
                     },
                     boxShadow: { 'premium': '0 10px 40px -10px rgba(0,0,0,0.08)' }
                 }
@@ -136,8 +137,15 @@
                             </div>
                             <div class="flex items-center gap-3">
                                 <span class="bg-brand-50 text-brand-600 border border-brand-200 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wide print:hidden"><i class="fa-solid fa-bolt mr-1"></i> Editable</span>
+                                
                                 <div id="action-buttons" class="hidden flex items-center gap-2 print:hidden">
-                                    <button onclick="window.print()" class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"><i class="fa-solid fa-print"></i></button>
+                                    <button onclick="sendViaWhatsApp()" class="w-9 h-9 flex items-center justify-center rounded-lg bg-whatsapp-50 text-whatsapp-600 hover:bg-whatsapp-500 hover:text-white transition-colors border border-whatsapp-500/20" title="Send Prescription to Patient on WhatsApp">
+                                        <i class="fa-brands fa-whatsapp text-lg"></i>
+                                    </button>
+                                    
+                                    <button onclick="window.print()" class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors" title="Print Prescription">
+                                        <i class="fa-solid fa-print"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -199,7 +207,7 @@
 
         window.onload = () => { renderHistoryList(); };
 
-        // --- EXPORT, ADD/DEL MEDICINE LOGIC (unchanged) ---
+        // --- EXPORT, ADD/DEL MEDICINE LOGIC ---
         function addMedicine() {
             if(!currentRecordId) return alert("Please generate or load a patient record first.");
             const record = emrHistory.find(r => r.id === currentRecordId);
@@ -229,10 +237,46 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
-        // --- UPGRADED SPEECH RECOGNITION (FIXED SILENCE TIMEOUT) ---
+        // --- NEW: WHATSAPP INTEGRATION LOGIC ---
+        function sendViaWhatsApp() {
+            if (!currentRecordId) return alert("Please generate a clinical note first.");
+            const record = emrHistory.find(r => r.id === currentRecordId);
+            if (!record || !record.data) return alert("No prescription data available.");
+
+            const phone = prompt("Enter patient's WhatsApp number (with country code, e.g., 919876543210):", "91");
+            if (!phone) return; // User cancelled
+
+            let msg = `*Dr. Clinic - ePrescription*\n`;
+            msg += `---------------------------\n`;
+            msg += `*Patient:* ${record.patientName} ${record.age ? '('+record.age+'y)' : ''}\n`;
+            msg += `*Date:* ${new Date().toLocaleDateString()}\n\n`;
+            
+            if(record.data.soap && record.data.soap.assessment) {
+                msg += `*Diagnosis:* ${document.getElementById('soap-a').innerText || record.data.soap.assessment}\n\n`;
+            }
+
+            if (record.data.prescription && record.data.prescription.length > 0) {
+                msg += `*Rx (Medicines):*\n`;
+                record.data.prescription.forEach((rx, i) => {
+                    msg += `${i + 1}. *${rx.medicine}*\n`;
+                    msg += `   Dose: ${rx.dosage} | Duration: ${rx.duration}\n`;
+                    msg += `   Note: ${rx.instructions}\n\n`;
+                });
+            } else {
+                msg += `No medicines prescribed.\n\n`;
+            }
+
+            msg += `*Plan/Advice:* ${document.getElementById('soap-p').innerText || record.data.soap?.plan || 'N/A'}\n\n`;
+            msg += `_Note: Please consult the clinic immediately in case of any adverse reactions._`;
+
+            const encodedMsg = encodeURIComponent(msg);
+            window.open(`https://wa.me/${phone.replace(/\D/g,'')}?text=${encodedMsg}`, '_blank');
+        }
+
+        // --- SPEECH RECOGNITION ---
         let recognition; 
         let isRecording = false; 
-        let intentionalStop = true; // Tracks if the user actually clicked "Stop"
+        let intentionalStop = true;
         let finalTranscript = '';
         
         const transcriptOutput = document.getElementById('transcript-output');
@@ -245,20 +289,16 @@
             recognition = new webkitSpeechRecognition(); 
             recognition.continuous = true; 
             recognition.interimResults = true;
-            recognition.lang = 'en-IN'; // Set to Indian English
+            recognition.lang = 'en-IN';
 
             recognition.onstart = () => { 
-                isRecording = true; 
-                intentionalStop = false;
-                
-                // Update UI to clearly show it is recording
+                isRecording = true; intentionalStop = false;
                 recordBtn.classList.replace('bg-slate-100', 'bg-red-50');
                 recordBtn.classList.replace('text-slate-700', 'text-red-600');
                 recordBtn.classList.replace('border-slate-200', 'border-red-200');
                 micIcon.classList.add('fa-beat-fade');
                 recordText.innerText = "Recording... (Click to Stop)";
-                micPulse.classList.remove('hidden'); 
-                micPulse.classList.add('animate-ping'); 
+                micPulse.classList.remove('hidden'); micPulse.classList.add('animate-ping'); 
             };
             
             recognition.onresult = (e) => {
@@ -272,35 +312,26 @@
             
             recognition.onend = () => { 
                 isRecording = false; 
-                
                 if (!intentionalStop) {
-                    // browser auto-stopped due to silence, restart it instantly!
                     try { recognition.start(); } catch(e) { console.log("Restart error", e); }
-                    return; // Skip UI reset
+                    return; 
                 }
-
-                // Normal Stop UI reset
                 recordBtn.classList.replace('bg-red-50', 'bg-slate-100');
                 recordBtn.classList.replace('text-red-600', 'text-slate-700');
                 recordBtn.classList.replace('border-red-200', 'border-slate-200');
                 micIcon.classList.remove('fa-beat-fade');
                 recordText.innerText = "Start Dictation";
-                micPulse.classList.add('hidden'); 
-                micPulse.classList.remove('animate-ping'); 
+                micPulse.classList.add('hidden'); micPulse.classList.remove('animate-ping'); 
                 autoSaveContext(); 
             };
         }
 
         recordBtn.onclick = () => { 
             if(!recognition) return alert("Microphone not supported in this browser."); 
-            
             if(!isRecording) { 
-                finalTranscript = transcriptOutput.value; // Keep existing text
-                intentionalStop = false;
-                recognition.start(); 
+                finalTranscript = transcriptOutput.value; intentionalStop = false; recognition.start(); 
             } else { 
-                intentionalStop = true; // Tell the auto-restarter to stand down
-                recognition.stop(); 
+                intentionalStop = true; recognition.stop(); 
             } 
         };
 
@@ -357,7 +388,7 @@
         function loadRecord(id) {
             const record = emrHistory.find(r => r.id === id); if(!record) return;
             currentRecordId = id; finalTranscript = record.transcript; intentionalStop = true;
-            if(recognition && isRecording) recognition.stop(); // Stop recording if switching patients
+            if(recognition && isRecording) recognition.stop();
             
             document.getElementById('patient-name').value = record.patientName === "Unknown Patient" ? "" : record.patientName;
             document.getElementById('patient-age').value = record.age || ""; document.getElementById('patient-gender').value = record.gender || "";
@@ -390,7 +421,6 @@
 
             document.getElementById('btn-text').innerText = "Processing..."; document.getElementById('btn-spinner').classList.remove('hidden'); document.getElementById('gen-btn').disabled = true;
             
-            // NEW PROMPT: Added Indian context and Suggested Treatment
             const systemPrompt = `You are a Medical AI Scribe and Clinical Decision Support System tailored for Indian clinical practice.
             Extract SOAP notes and Rx. Analyze symptoms and generate up to 3 Differential Diagnoses.
             Also provide a Suggested Line of Treatment, mentioning common Indian medicine brand names (e.g., Dolo 650, Pan-D, Monocef, Augmentin) and standard Indian clinical protocols where applicable.
@@ -422,51 +452,60 @@
 
         function showError(msg) { document.getElementById('error-box').innerText = msg; document.getElementById('error-box').classList.remove('hidden'); }
 
-        // --- RENDER OUTPUT UI ---
+        // --- RENDER OUTPUT UI (COMPLETED & FIXED) ---
         function renderOutputUI(data) {
             document.getElementById('status-msg').classList.add('hidden');
             const outputArea = document.getElementById('output-area');
-            outputArea.classList.remove('animate-fade-in'); void outputArea.offsetWidth; 
-            outputArea.classList.add('animate-fade-in'); outputArea.classList.remove('hidden');
+            
+            // Animation reset
+            outputArea.classList.remove('animate-fade-in'); 
+            void outputArea.offsetWidth; 
+            outputArea.classList.add('animate-fade-in');
+            
+            outputArea.classList.remove('hidden');
             document.getElementById('action-buttons').classList.remove('hidden');
 
-            const diffSection = document.getElementById('differential-section'); 
-            const diffList = document.getElementById('diff-list'); 
-            const treatmentText = document.getElementById('suggested-treatment');
-            diffList.innerHTML = "";
-            
+            // 1. Render Differentials
+            const diffList = document.getElementById('diff-list');
+            diffList.innerHTML = '';
             if(data.differentials && data.differentials.length > 0) {
-                diffSection.classList.remove('hidden');
-                data.differentials.forEach(diff => {
-                    const prob = parseInt(diff.probability) || 0; let colorClass = prob > 70 ? 'bg-red-500' : prob > 40 ? 'bg-amber-500' : 'bg-green-500';
-                    diffList.innerHTML += `<div class="bg-white p-3 rounded-lg border border-slate-100 shadow-sm"><div class="flex justify-between items-center mb-1"><span class="font-bold text-slate-800 text-sm">${diff.condition}</span><span class="text-xs font-bold text-slate-500">${prob}%</span></div><div class="w-full bg-slate-100 rounded-full h-1.5 mb-2"><div class="${colorClass} h-1.5 rounded-full" style="width: ${prob}%"></div></div><p class="text-[11px] text-slate-500 leading-snug">${diff.reasoning}</p></div>`;
-                });
-                
-                // NEW: Render Suggested Treatment
-                treatmentText.innerText = data.suggestedTreatment || "No specific treatment line suggested. Please review symptoms.";
-            } else diffSection.classList.add('hidden');
-
-            ['subjective', 'objective', 'assessment', 'plan'].forEach(key => document.getElementById(`soap-${key.charAt(0)}`).innerText = data.soap?.[key] || "");
-
-            const rxList = document.getElementById('rx-list'); rxList.innerHTML = ""; 
-            if(data.prescription && data.prescription.length > 0) {
-                data.prescription.forEach((med, index) => {
-                    rxList.innerHTML += `
-                        <div class="group relative p-4 bg-slate-50 rounded-lg border border-slate-100 flex items-start gap-4 transition-colors hover:bg-slate-100 print:bg-transparent print:border-b print:border-slate-300 print:rounded-none print:p-2">
-                            <div class="font-bold text-slate-400 text-lg w-6 pt-1 print:text-slate-800">${index + 1}.</div>
-                            <div class="flex-grow">
-                                <h4 class="font-bold text-slate-800 text-base" contenteditable="true" data-placeholder="Medicine Name (Click to edit)" onblur="autoSaveRx(${index}, 'medicine', this.innerText)">${med.medicine || ""}</h4>
-                                <div class="text-sm text-slate-600 mt-2 flex gap-4 print:text-black">
-                                    <span class="flex items-center"><i class="fa-solid fa-cubes-stacked text-slate-300 mr-2 text-xs print:hidden"></i> <span contenteditable="true" data-placeholder="Dosage" onblur="autoSaveRx(${index}, 'dosage', this.innerText)">${med.dosage || ""}</span></span>
-                                    <span class="flex items-center"><i class="fa-regular fa-calendar text-slate-300 mr-2 text-xs print:hidden"></i> <span contenteditable="true" data-placeholder="Duration" onblur="autoSaveRx(${index}, 'duration', this.innerText)">${med.duration || ""}</span></span>
-                                </div>
-                                <p class="text-xs text-brand-600 mt-3 flex items-start print:text-slate-600"><i class="fa-solid fa-info-circle mr-1.5 mt-0.5 opacity-50 print:hidden"></i> <span contenteditable="true" data-placeholder="Instructions" class="italic flex-grow" onblur="autoSaveRx(${index}, 'instructions', this.innerText)">${med.instructions || ""}</span></p>
-                            </div>
-                            <button onclick="deleteMedicine(${index})" class="absolute top-4 right-4 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity print:hidden" title="Remove medication"><i class="fa-solid fa-trash-can"></i></button>
+                data.differentials.forEach(d => {
+                    diffList.innerHTML += `<div class="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold text-slate-800 text-sm">${d.condition}</span>
+                            <span class="text-xs font-bold px-2 py-0.5 rounded ${d.probability > 70 ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}">${d.probability}%</span>
                         </div>
-                    `;
+                        <p class="text-xs text-slate-500">${d.reasoning}</p>
+                    </div>`;
                 });
-            } else { rxList.innerHTML = `<div class="p-4 text-slate-500 text-sm italic">No medications. Click "Add Med" to prescribe.</div>`; }
+            }
+
+            // 2. Render Suggested Treatment
+            document.getElementById('suggested-treatment').innerText = data.suggestedTreatment || "No specific treatment suggested.";
+
+            // 3. Render SOAP Notes
+            document.getElementById('soap-s').innerText = data.soap?.subjective || "";
+            document.getElementById('soap-o').innerText = data.soap?.objective || "";
+            document.getElementById('soap-a').innerText = data.soap?.assessment || "";
+            document.getElementById('soap-p').innerText = data.soap?.plan || "";
+
+            // 4. Render Medicines
+            const rxList = document.getElementById('rx-list');
+            rxList.innerHTML = '';
+            if(data.prescription && data.prescription.length > 0) {
+                data.prescription.forEach((rx, i) => {
+                    rxList.innerHTML += `<div class="grid grid-cols-12 gap-2 items-center bg-white p-2 rounded-lg border border-slate-100 hover:border-brand-200 transition-colors group relative">
+                        <div class="col-span-1 text-center font-bold text-brand-300">${i+1}.</div>
+                        <div class="col-span-3"><input type="text" value="${rx.medicine}" onblur="autoSaveRx(${i}, 'medicine', this.value)" class="w-full text-sm font-semibold text-slate-800 outline-none bg-transparent border-b border-dashed border-transparent focus:border-brand-500 focus:bg-slate-50 px-1 py-0.5 rounded"></div>
+                        <div class="col-span-2"><input type="text" value="${rx.dosage}" onblur="autoSaveRx(${i}, 'dosage', this.value)" class="w-full text-xs text-slate-600 outline-none bg-transparent border-b border-dashed border-transparent focus:border-brand-500 focus:bg-slate-50 px-1 py-0.5 rounded" placeholder="Dosage"></div>
+                        <div class="col-span-2"><input type="text" value="${rx.duration}" onblur="autoSaveRx(${i}, 'duration', this.value)" class="w-full text-xs text-slate-600 outline-none bg-transparent border-b border-dashed border-transparent focus:border-brand-500 focus:bg-slate-50 px-1 py-0.5 rounded" placeholder="Duration"></div>
+                        <div class="col-span-3"><input type="text" value="${rx.instructions}" onblur="autoSaveRx(${i}, 'instructions', this.value)" class="w-full text-xs text-slate-500 italic outline-none bg-transparent border-b border-dashed border-transparent focus:border-brand-500 focus:bg-slate-50 px-1 py-0.5 rounded" placeholder="Instructions"></div>
+                        <div class="col-span-1 text-right"><button onclick="deleteMedicine(${i})" class="text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 print:hidden"><i class="fa-solid fa-trash text-xs"></i></button></div>
+                    </div>`;
+                });
+            } else {
+                rxList.innerHTML = '<div class="text-sm text-slate-500 italic p-2">No medications prescribed.</div>';
+            }
         }
     </script>
 </body>
